@@ -10,6 +10,9 @@
   --radius: 14px;
   --shadow: 0 4px 16px rgba(51, 38, 43, 0.08);
   --max-width: 1080px;
+  --font-heading: "Baloo 2", "Segoe UI", Roboto, sans-serif;
+  --font-body: "Nunito", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --color-hero-dark: #2b2026;
 }
 
 * {
@@ -22,10 +25,10 @@ html {
 
 body {
   margin: 0;
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   background: var(--color-bg);
   color: var(--color-text);
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 img {
@@ -38,6 +41,8 @@ a {
 }
 
 h1, h2, h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
   line-height: 1.2;
   margin: 0 0 0.5em;
 }
@@ -70,8 +75,9 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   text-decoration: none;
   color: var(--color-text);
 }
@@ -133,6 +139,7 @@ h1, h2, h3 {
   display: inline-block;
   padding: 12px 22px;
   border-radius: 999px;
+  font-family: var(--font-heading);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -160,86 +167,70 @@ h1, h2, h3 {
   color: var(--color-primary-dark);
 }
 
+.btn-outline-light {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #fff;
+  backdrop-filter: blur(2px);
+}
+
+.btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 .btn-secondary {
   background: var(--color-accent);
   color: #fff;
 }
 
-/* Hero */
+/* Hero: foto de portada con overlay y texto encima.
+   La franja de foto (.hero-bg) tiene alto fijo, recortado de forma
+   segura para no mostrar el flyer original de donde sale la imagen.
+   El contenido de texto fluye libre debajo/encima, así que si necesita
+   más alto (por ejemplo en mobile con varios botones) nunca "estira"
+   ni cambia el recorte de la foto. */
 .hero {
-  padding: 64px 0 48px;
-  text-align: center;
   position: relative;
+  padding: 120px 0 56px;
+  background: var(--color-hero-dark);
+  color: #fff;
   overflow: hidden;
 }
 
-.hero::before,
-.hero::after {
-  content: "";
+.hero-bg {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.35;
-  pointer-events: none;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 460px;
+  background-image: linear-gradient(180deg, rgba(51, 38, 43, 0.35), var(--color-hero-dark)), url("../img/flopi-hero.jpg");
+  background-size: cover;
+  background-position: 50% 60%;
+  background-repeat: no-repeat;
 }
 
-.hero::before {
-  width: 340px;
-  height: 340px;
-  background: var(--color-primary);
-  top: -140px;
-  left: -100px;
-}
-
-.hero::after {
-  width: 300px;
-  height: 300px;
-  background: var(--color-accent);
-  bottom: -120px;
-  right: -80px;
-}
-
-.hero > * {
+.hero-content {
   position: relative;
   z-index: 1;
-}
-
-.hero-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
   text-align: left;
-}
-
-.hero-photo {
-  flex-shrink: 0;
-  width: 280px;
-  aspect-ratio: 4 / 3;
-  border-radius: 24px;
-  object-fit: cover;
-  object-position: 50% 100%;
-  box-shadow: var(--shadow);
-}
-
-.hero-text {
-  max-width: 560px;
+  max-width: 620px;
 }
 
 .hero h1 {
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: #fff;
+  font-size: clamp(1.9rem, 4.4vw, 2.8rem);
 }
 
 .hero p.lead {
-  color: var(--color-muted);
+  color: rgba(255, 255, 255, 0.92);
   margin: 0 0 28px;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.2);
 }
 
 .hero-actions {
   display: flex;
   gap: 14px;
-  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
@@ -247,34 +238,37 @@ h1, h2, h3 {
   margin-top: 18px;
 }
 
+.hero-social a {
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.2);
+}
+
+.hero-social a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
 @media (max-width: 720px) {
-  .hero-inner {
-    flex-direction: column;
+  .hero {
+    padding: 84px 0 40px;
+  }
+
+  .hero-bg {
+    height: 300px;
+    background-position: 50% 100%;
+  }
+
+  .hero-content {
     text-align: center;
-  }
-
-  .hero-photo {
-    width: 220px;
-  }
-
-  .hero p.lead {
-    margin: 0 auto 28px;
+    margin: 0 auto;
   }
 
   .hero-actions {
     justify-content: center;
   }
-}
-
-.hero-social a {
-  color: var(--color-muted);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.hero-social a:hover {
-  color: var(--color-primary-dark);
 }
 
 /* Sections */
