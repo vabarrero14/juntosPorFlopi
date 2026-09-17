@@ -38,11 +38,22 @@
           La cuenta <strong id="denied-email"></strong> todavía no tiene permiso
           para entrar al panel.
         </p>
-        <p class="form-help">
-          Pedile a un administrador que agregue tu email desde "Administradores",
-          o si sos la primera persona en usar el panel, seguí los pasos del
-          README del proyecto para crear el primer admin.
+
+        <div id="bootstrap-section" hidden>
+          <p class="form-help">
+            Esta cuenta es la que va a administrar el sitio. Tocá el botón para
+            registrarte como el primer administrador (solo funciona una vez).
+          </p>
+          <div id="bootstrap-error" class="form-message error" hidden></div>
+          <button type="button" id="bootstrap-btn" class="btn btn-primary">
+            Registrarme como administrador
+          </button>
+        </div>
+
+        <p id="denied-help" class="form-help">
+          Pedile a un administrador que agregue tu email desde "Administradores".
         </p>
+
         <button type="button" id="sign-out-btn" class="btn btn-outline">
           Salir e ingresar con otra cuenta
         </button>

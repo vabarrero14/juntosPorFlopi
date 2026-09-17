@@ -52,11 +52,26 @@ service cloud.firestore {
     }
 
     // Lista de administradores: cualquier admin puede ver quiénes son,
-    // pero solo un "owner" puede agregar o quitar administradores. El
-    // primer owner se crea a mano desde la consola de Firebase.
+    // pero solo un "owner" puede agregar o quitar administradores.
+    //
+    // Bootstrap: como no puede existir un primer owner sin que alguien ya
+    // sea owner, se permite una única excepción: la cuenta dueña del
+    // proyecto puede crear su propio documento admins/{su email} con
+    // role "owner" desde la pantalla de login (sin tocar la consola de
+    // Firebase). Nadie más puede auto-asignarse admin de esta forma: el
+    // email tiene que coincidir exactamente con el hardcodeado acá.
     match /admins/{email} {
       allow read: if isAdmin();
-      allow create, update, delete: if isOwner();
+
+      allow create: if isOwner() || (
+        request.auth != null
+        && request.auth.token.email == 'vabarreto14@gmail.com'
+        && email == 'vabarreto14@gmail.com'
+        && request.resource.data.email == 'vabarreto14@gmail.com'
+        && request.resource.data.role == 'owner'
+      );
+
+      allow update, delete: if isOwner();
     }
   }
 }
