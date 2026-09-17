@@ -52,6 +52,7 @@ form.addEventListener("submit", async (e) => {
       mapsUrl: formData.get("mapsUrl").trim(),
       organizer: formData.get("organizer").trim(),
       organizerContact: formData.get("organizerContact").trim(),
+      instagramUrl: formData.get("instagramUrl").trim(),
       submitterName: formData.get("submitterName").trim(),
       submitterEmail: formData.get("submitterEmail").trim(),
       submitterPhone: formData.get("submitterPhone").trim(),

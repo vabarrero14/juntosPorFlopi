@@ -55,6 +55,7 @@ function buildEventFields(input, Timestamp) {
     },
     category: input.category,
     imageUrl: null,
+    instagramUrl: input.instagramUrl || null,
   };
 }
 

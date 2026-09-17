@@ -36,6 +36,7 @@ function openModal(donation) {
   form.title.value = donation?.title ?? "";
   form.details.value = donation?.details ?? "";
   form.order.value = donation?.order ?? 0;
+  form.instagramUrl.value = donation?.instagramUrl ?? "";
   form.active.checked = donation ? donation.active : true;
   modal.hidden = false;
 }
@@ -116,6 +117,7 @@ async function init() {
       title: form.title.value.trim(),
       details: form.details.value.trim(),
       order: Number(form.order.value) || 0,
+      instagramUrl: form.instagramUrl.value.trim(),
       active: form.active.checked,
     };
 

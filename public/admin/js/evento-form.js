@@ -60,6 +60,7 @@ async function prefillForm() {
     form.mapsUrl.value = event.location?.mapsUrl ?? "";
     form.organizer.value = event.organizer;
     form.organizerContact.value = event.organizerContact ?? "";
+    form.instagramUrl.value = event.instagramUrl ?? "";
   } catch (error) {
     console.error("Error cargando el evento:", error);
     showMessage("No pudimos cargar el evento para editarlo.", "error");
@@ -94,6 +95,7 @@ async function init() {
       mapsUrl: formData.get("mapsUrl").trim(),
       organizer: formData.get("organizer").trim(),
       organizerContact: formData.get("organizerContact").trim(),
+      instagramUrl: formData.get("instagramUrl").trim(),
     };
 
     submitBtn.disabled = true;

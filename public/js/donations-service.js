@@ -51,6 +51,7 @@ export async function createDonation(input) {
     details: input.details,
     active: input.active,
     order: input.order,
+    instagramUrl: input.instagramUrl || null,
   });
 }
 
@@ -62,6 +63,7 @@ export async function updateDonation(id, input) {
     details: input.details,
     active: input.active,
     order: input.order,
+    instagramUrl: input.instagramUrl || null,
   });
 }
 

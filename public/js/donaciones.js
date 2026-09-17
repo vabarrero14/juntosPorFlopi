@@ -9,6 +9,7 @@ function renderDonationCard(donation) {
     <div>
       <h3 class="mt-0 mb-0">${donation.title}</h3>
       <p class="donation-details">${donation.details}</p>
+      ${donation.instagramUrl ? `<a href="${donation.instagramUrl}" target="_blank" rel="noopener">Ver posteo en Instagram</a>` : ""}
     </div>
     <button type="button" class="btn btn-outline copy-btn">Copiar</button>
   `;

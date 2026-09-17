@@ -22,6 +22,7 @@ const modalLocation = document.getElementById("modal-location");
 const modalOrganizer = document.getElementById("modal-organizer");
 const modalDescription = document.getElementById("modal-description");
 const modalMapsLink = document.getElementById("modal-maps-link");
+const modalInstagramLink = document.getElementById("modal-instagram-link");
 
 let allEvents = [];
 let currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -57,6 +58,13 @@ function openModal(event) {
     modalMapsLink.hidden = false;
   } else {
     modalMapsLink.hidden = true;
+  }
+
+  if (event.instagramUrl) {
+    modalInstagramLink.href = event.instagramUrl;
+    modalInstagramLink.hidden = false;
+  } else {
+    modalInstagramLink.hidden = true;
   }
 
   modal.hidden = false;

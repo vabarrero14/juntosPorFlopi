@@ -56,6 +56,7 @@ centralice toda esa información en un solo lugar, con foco en:
   },
   category: string,              // ej: "rifa", "colecta de sangre", "feria", "bono contribución", "otro"
   imageUrl: string | null,       // flyer del evento (Storage)
+  instagramUrl: string | null,   // link al posteo de Instagram del evento
   status: "pending" | "approved" | "rejected",
   submittedBy: {
     name: string,
@@ -79,6 +80,7 @@ centralice toda esa información en un solo lugar, con foco en:
   details: string,               // CBU/alias/link, texto libre
   active: boolean,
   order: number,                 // para ordenar en la UI
+  instagramUrl: string | null,   // link al posteo de Instagram relacionado
 }
 ```
 
