@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proponer un evento — Juntos por Flopi</title>
+  <meta name="description" content="Proponé un evento solidario para acompañar a Flopi. Se revisa antes de publicarse." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-page="proponer">
+  <header class="site-header">
+    <nav class="nav-bar">
+      <a href="index.html" class="brand">
+        <span class="brand-emoji">💗</span> Juntos por Flopi
+      </a>
+      <button class="nav-toggle" aria-label="Abrir menú">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html" data-page="home">Inicio</a></li>
+        <li><a href="calendario.html" data-page="calendario">Calendario</a></li>
+        <li><a href="historia.html" data-page="historia">Historia de Flopi</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donar</a></li>
+        <li><a href="proponer-evento.html" data-page="proponer">Proponer un evento</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2>Proponer un evento</h2>
+      <p>Contanos qué estás organizando. Antes de publicarse en el calendario, lo revisamos.</p>
+    </div>
+
+    <form id="event-form" class="form">
+      <div id="form-message" class="form-message" hidden></div>
+
+      <div class="form-row">
+        <label for="title">Nombre del evento *</label>
+        <input type="text" id="title" name="title" required maxlength="120" />
+      </div>
+
+      <div class="form-row">
+        <label for="category">Categoría *</label>
+        <select id="category" name="category" required></select>
+      </div>
+
+      <div class="form-row">
+        <label for="description">Descripción *</label>
+        <textarea id="description" name="description" required maxlength="800"></textarea>
+      </div>
+
+      <div class="form-row-group">
+        <div class="form-row">
+          <label for="date">Fecha *</label>
+          <input type="date" id="date" name="date" required />
+        </div>
+        <div class="form-row">
+          <label for="time">Hora *</label>
+          <input type="time" id="time" name="time" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="address">Dirección *</label>
+        <input type="text" id="address" name="address" required maxlength="200" />
+      </div>
+
+      <div class="form-row-group">
+        <div class="form-row">
+          <label for="city">Ciudad / localidad</label>
+          <input type="text" id="city" name="city" maxlength="100" />
+        </div>
+        <div class="form-row">
+          <label for="mapsUrl">Link a Google Maps</label>
+          <input type="url" id="mapsUrl" name="mapsUrl" placeholder="https://maps.google.com/..." />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="organizer">Organiza *</label>
+        <input type="text" id="organizer" name="organizer" required maxlength="120" />
+      </div>
+
+      <div class="form-row">
+        <label for="organizerContact">Contacto del organizador (whatsapp, instagram, etc.)</label>
+        <input type="text" id="organizerContact" name="organizerContact" maxlength="150" />
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--color-border); margin: 20px 0;" />
+      <p class="form-help">Tus datos (no se publican) por si necesitamos confirmar algo del evento:</p>
+
+      <div class="form-row-group">
+        <div class="form-row">
+          <label for="submitterName">Tu nombre *</label>
+          <input type="text" id="submitterName" name="submitterName" required maxlength="120" />
+        </div>
+        <div class="form-row">
+          <label for="submitterEmail">Tu email *</label>
+          <input type="email" id="submitterEmail" name="submitterEmail" required maxlength="150" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="submitterPhone">Tu teléfono</label>
+        <input type="tel" id="submitterPhone" name="submitterPhone" maxlength="40" />
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submit-btn">Enviar propuesta</button>
+    </form>
+  </main>
+
+  <footer class="site-footer container">
+    <p>Hecho con 💗 por la familia y amigos de Flopi.</p>
+    <div class="footer-links">
+      <a href="historia.html">Historia de Flopi</a>
+      <a href="admin/index.html">Administración</a>
+    </div>
+  </footer>
+
+  <script type="module" src="js/nav.js"></script>
+  <script type="module" src="js/proponer-evento.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Eventos: lectura pública solo de aprobados, cualquiera puede proponer
+    // uno nuevo (queda "pending"), solo un admin aprueba/edita/borra.
+    match /events/{eventId} {
+      allow read: if resource.data.status == 'approved' || isAdmin();
+
+      allow create: if request.resource.data.status == 'pending'
+        && request.resource.data.reviewedBy == null
+        && request.resource.data.reviewedAt == null
+        && request.resource.data.keys().hasAll([
+          'title', 'description', 'organizer', 'date', 'location',
+          'category', 'submittedBy', 'status', 'createdAt'
+        ]);
+
+      allow update, delete: if isAdmin();
+    }
+
+    // Medios de donación: lectura pública solo de los activos.
+    match /donations/{donationId} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Contenido editable del sitio (Historia de Flopi, Home, etc.).
+    match /siteContent/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Lista de administradores: se gestiona manualmente desde la consola
+    // de Firebase por ahora (Fase 4 agrega UI para esto).
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+  }
+}

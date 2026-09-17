@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donaciones — Juntos por Flopi</title>
+  <meta name="description" content="Formas de donar para acompañar el tratamiento de Flopi." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-page="donaciones">
+  <header class="site-header">
+    <nav class="nav-bar">
+      <a href="index.html" class="brand">
+        <span class="brand-emoji">💗</span> Juntos por Flopi
+      </a>
+      <button class="nav-toggle" aria-label="Abrir menú">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html" data-page="home">Inicio</a></li>
+        <li><a href="calendario.html" data-page="calendario">Calendario</a></li>
+        <li><a href="historia.html" data-page="historia">Historia de Flopi</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donar</a></li>
+        <li><a href="proponer-evento.html" data-page="proponer">Proponer un evento</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2>Donaciones</h2>
+      <p>Todo lo recaudado se destina al tratamiento y los gastos asociados de Flopi.</p>
+    </div>
+
+    <div id="donations-list" class="cards-grid" style="grid-template-columns: 1fr; max-width: 640px; margin: 0 auto;">
+      <p class="text-center">Cargando formas de donar…</p>
+    </div>
+  </main>
+
+  <footer class="site-footer container">
+    <p>Hecho con 💗 por la familia y amigos de Flopi.</p>
+    <div class="footer-links">
+      <a href="historia.html">Historia de Flopi</a>
+      <a href="admin/index.html">Administración</a>
+    </div>
+  </footer>
+
+  <script type="module" src="js/nav.js"></script>
+  <script type="module" src="js/donaciones.js"></script>
+</body>
+</html>

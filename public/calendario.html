@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendario de eventos — Juntos por Flopi</title>
+  <meta name="description" content="Todos los eventos solidarios organizados para Flopi, en un calendario." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-page="calendario">
+  <header class="site-header">
+    <nav class="nav-bar">
+      <a href="index.html" class="brand">
+        <span class="brand-emoji">💗</span> Juntos por Flopi
+      </a>
+      <button class="nav-toggle" aria-label="Abrir menú">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html" data-page="home">Inicio</a></li>
+        <li><a href="calendario.html" data-page="calendario">Calendario</a></li>
+        <li><a href="historia.html" data-page="historia">Historia de Flopi</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donar</a></li>
+        <li><a href="proponer-evento.html" data-page="proponer">Proponer un evento</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2>Calendario de eventos</h2>
+      <p>Tocá un evento para ver el detalle completo.</p>
+    </div>
+
+    <div class="calendar-toolbar">
+      <div class="calendar-nav">
+        <button id="prev-month" aria-label="Mes anterior">‹</button>
+        <span id="month-label" class="calendar-month-label"></span>
+        <button id="next-month" aria-label="Mes siguiente">›</button>
+        <button id="today-btn" class="btn btn-outline" style="padding: 6px 14px;">Hoy</button>
+      </div>
+      <div class="calendar-filter">
+        <select id="category-filter">
+          <option value="">Todas las categorías</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="calendar-status"></div>
+    <div id="calendar-grid" class="calendar-grid"></div>
+  </main>
+
+  <div id="event-modal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="modal-close" aria-label="Cerrar">✕</button>
+      <span id="modal-category" class="category-tag"></span>
+      <h3 id="modal-title" class="mt-0"></h3>
+      <div class="modal-field">
+        <strong>Fecha</strong>
+        <span id="modal-date"></span>
+      </div>
+      <div class="modal-field">
+        <strong>Lugar</strong>
+        <span id="modal-location"></span>
+      </div>
+      <div class="modal-field">
+        <strong>Organiza</strong>
+        <span id="modal-organizer"></span>
+      </div>
+      <div class="modal-field" id="modal-description-wrap">
+        <strong>Descripción</strong>
+        <span id="modal-description"></span>
+      </div>
+      <a id="modal-maps-link" href="#" target="_blank" rel="noopener" class="btn btn-outline" style="margin-top: 8px;">Ver en el mapa</a>
+    </div>
+  </div>
+
+  <footer class="site-footer container">
+    <p>Hecho con 💗 por la familia y amigos de Flopi.</p>
+    <div class="footer-links">
+      <a href="historia.html">Historia de Flopi</a>
+      <a href="admin/index.html">Administración</a>
+    </div>
+  </footer>
+
+  <script type="module" src="js/nav.js"></script>
+  <script type="module" src="js/calendario.js"></script>
+</body>
+</html>

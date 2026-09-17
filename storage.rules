@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Flyers/imágenes de eventos: lectura pública.
+    // Escritura: cualquier usuario autenticado por ahora (temporal, hasta
+    // que el panel de administración use custom claims para admins).
+    match /events/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Imágenes de contenido general del sitio (home, historia de Flopi).
+    match /site/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
