@@ -531,6 +531,112 @@ textarea {
   font-size: 0.95rem;
 }
 
+/* Admin */
+.admin-nav-bar {
+  flex-wrap: wrap;
+  gap: 20px;
+  row-gap: 10px;
+}
+
+.admin-nav-links {
+  flex-wrap: wrap;
+}
+
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.admin-user-email {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 10px;
+}
+
+.admin-tab {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+
+.admin-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.admin-row {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+  flex: 1;
+}
+
+.admin-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-row-actions .btn {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
+.status-badge {
+  display: inline-block;
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fff4e0;
+  color: #a56a00;
+}
+
+.status-approved {
+  background: #e9f7ef;
+  color: #1e7a44;
+}
+
+.status-rejected {
+  background: #fbe9ec;
+  color: #b3273f;
+}
+
 /* Footer */
 .site-footer {
   border-top: 1px solid var(--color-border);

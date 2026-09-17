@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contenido — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="dashboard.html" class="brand">
+        <span class="brand-emoji">💗</span> Admin Flopi
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+        <li><a href="eventos.html" data-page="eventos">Eventos</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donaciones</a></li>
+        <li><a href="contenido.html" data-page="contenido">Contenido</a></li>
+        <li><a href="administradores.html" data-page="administradores">Administradores</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2>Historia de Flopi</h2>
+      <p>Este texto se muestra en <a href="../historia.html" target="_blank" rel="noopener">la página pública</a>.</p>
+    </div>
+
+    <form id="content-form" class="form" style="max-width: 720px;">
+      <div id="form-message" class="form-message" hidden></div>
+
+      <div class="form-row">
+        <label for="content-title">Título</label>
+        <input type="text" id="content-title" name="title" maxlength="120" />
+      </div>
+
+      <div class="form-row">
+        <label for="content-body">Texto</label>
+        <textarea id="content-body" name="body" rows="14" style="min-height: 260px;"></textarea>
+        <p class="form-help">Cada línea en blanco separa un párrafo en la página pública.</p>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submit-btn">Guardar</button>
+    </form>
+  </main>
+
+  <script type="module" src="js/contenido.js"></script>
+</body>
+</html>

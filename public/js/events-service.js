@@ -29,32 +29,19 @@ export function categoryLabel(value) {
   return EVENT_CATEGORIES.find((c) => c.value === value)?.label ?? "Evento";
 }
 
-// Trae todos los eventos aprobados, ordenados por fecha.
-export async function fetchApprovedEvents() {
-  const { db, collection, query, where, orderBy, getDocs } = await loadFirestore();
-  const eventsRef = collection(db, "events");
-  const q = query(
-    eventsRef,
-    where("status", "==", "approved"),
-    orderBy("date", "asc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((docSnap) => {
-    const data = docSnap.data();
-    return {
-      id: docSnap.id,
-      ...data,
-      date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
-    };
-  });
+function toEventObject(docSnap) {
+  const data = docSnap.data();
+  return {
+    id: docSnap.id,
+    ...data,
+    date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : null,
+    reviewedAt: data.reviewedAt?.toDate ? data.reviewedAt.toDate() : null,
+  };
 }
 
-// Crea una propuesta de evento en estado "pending" (queda a la espera de
-// aprobación desde el panel de administración).
-export async function submitEventProposal(input) {
-  const { db, collection, addDoc, Timestamp } = await loadFirestore();
-  const eventsRef = collection(db, "events");
-  return addDoc(eventsRef, {
+function buildEventFields(input, Timestamp) {
+  return {
     title: input.title,
     description: input.description,
     organizer: input.organizer,
@@ -68,6 +55,45 @@ export async function submitEventProposal(input) {
     },
     category: input.category,
     imageUrl: null,
+  };
+}
+
+// Trae todos los eventos aprobados, ordenados por fecha (uso público).
+export async function fetchApprovedEvents() {
+  const { db, collection, query, where, orderBy, getDocs } = await loadFirestore();
+  const eventsRef = collection(db, "events");
+  const q = query(
+    eventsRef,
+    where("status", "==", "approved"),
+    orderBy("date", "asc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(toEventObject);
+}
+
+// Trae todos los eventos sin filtrar por estado (uso admin).
+export async function fetchAllEvents() {
+  const { db, collection, query, orderBy, getDocs } = await loadFirestore();
+  const eventsRef = collection(db, "events");
+  const q = query(eventsRef, orderBy("createdAt", "desc"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(toEventObject);
+}
+
+export async function fetchEventById(id) {
+  const { db, doc, getDoc } = await loadFirestore();
+  const snap = await getDoc(doc(db, "events", id));
+  if (!snap.exists()) return null;
+  return toEventObject(snap);
+}
+
+// Crea una propuesta de evento en estado "pending" (queda a la espera de
+// aprobación desde el panel de administración). Uso público.
+export async function submitEventProposal(input) {
+  const { db, collection, addDoc, Timestamp } = await loadFirestore();
+  const eventsRef = collection(db, "events");
+  return addDoc(eventsRef, {
+    ...buildEventFields(input, Timestamp),
     status: "pending",
     submittedBy: {
       name: input.submitterName,
@@ -79,4 +105,54 @@ export async function submitEventProposal(input) {
     reviewedBy: null,
     rejectionReason: null,
   });
+}
+
+// Crea un evento ya aprobado, cargado directamente por un admin.
+export async function createEventDirect(input, adminEmail) {
+  const { db, collection, addDoc, Timestamp } = await loadFirestore();
+  const eventsRef = collection(db, "events");
+  return addDoc(eventsRef, {
+    ...buildEventFields(input, Timestamp),
+    status: "approved",
+    submittedBy: {
+      name: adminEmail,
+      email: adminEmail,
+      phone: null,
+    },
+    createdAt: Timestamp.now(),
+    reviewedAt: Timestamp.now(),
+    reviewedBy: adminEmail,
+    rejectionReason: null,
+  });
+}
+
+// Actualiza los datos de un evento existente (uso admin).
+export async function updateEvent(id, input) {
+  const { db, doc, updateDoc, Timestamp } = await loadFirestore();
+  return updateDoc(doc(db, "events", id), buildEventFields(input, Timestamp));
+}
+
+export async function approveEvent(id, adminEmail) {
+  const { db, doc, updateDoc, Timestamp } = await loadFirestore();
+  return updateDoc(doc(db, "events", id), {
+    status: "approved",
+    reviewedAt: Timestamp.now(),
+    reviewedBy: adminEmail,
+    rejectionReason: null,
+  });
+}
+
+export async function rejectEvent(id, adminEmail, reason) {
+  const { db, doc, updateDoc, Timestamp } = await loadFirestore();
+  return updateDoc(doc(db, "events", id), {
+    status: "rejected",
+    reviewedAt: Timestamp.now(),
+    reviewedBy: adminEmail,
+    rejectionReason: reason || null,
+  });
+}
+
+export async function deleteEvent(id) {
+  const { db, doc, deleteDoc } = await loadFirestore();
+  return deleteDoc(doc(db, "events", id));
 }

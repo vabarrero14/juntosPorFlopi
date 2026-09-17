@@ -3,23 +3,38 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Los admins se identifican por email (no por uid) para poder
+    // "bootstrapear" el primer admin manualmente desde la consola de
+    // Firebase sin necesitar conocer su uid: alcanza con crear un
+    // documento admins/{email}.
+    function adminDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
     function isAdmin() {
       return request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
+    function isOwner() {
+      return request.auth != null && isAdmin() && adminDoc().data.role == 'owner';
     }
 
     // Eventos: lectura pública solo de aprobados, cualquiera puede proponer
-    // uno nuevo (queda "pending"), solo un admin aprueba/edita/borra.
+    // uno nuevo (queda "pending"); un admin puede además cargar eventos
+    // directamente ya aprobados, y solo un admin edita/borra/aprueba.
     match /events/{eventId} {
       allow read: if resource.data.status == 'approved' || isAdmin();
 
-      allow create: if request.resource.data.status == 'pending'
+      allow create: if isAdmin() || (
+        request.resource.data.status == 'pending'
         && request.resource.data.reviewedBy == null
         && request.resource.data.reviewedAt == null
         && request.resource.data.keys().hasAll([
           'title', 'description', 'organizer', 'date', 'location',
           'category', 'submittedBy', 'status', 'createdAt'
-        ]);
+        ])
+      );
 
       allow update, delete: if isAdmin();
     }
@@ -36,11 +51,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Lista de administradores: se gestiona manualmente desde la consola
-    // de Firebase por ahora (Fase 4 agrega UI para esto).
-    match /admins/{uid} {
+    // Lista de administradores: cualquier admin puede ver quiénes son,
+    // pero solo un "owner" puede agregar o quitar administradores. El
+    // primer owner se crea a mano desde la consola de Firebase.
+    match /admins/{email} {
       allow read: if isAdmin();
-      allow write: if false;
+      allow create, update, delete: if isOwner();
     }
   }
 }

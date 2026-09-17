@@ -3,18 +3,21 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Flyers/imágenes de eventos: lectura pública.
-    // Escritura: cualquier usuario autenticado por ahora (temporal, hasta
-    // que el panel de administración use custom claims para admins).
-    match /events/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    function isAdmin() {
+      return request.auth != null &&
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.token.email));
     }
 
-    // Imágenes de contenido general del sitio (home, historia de Flopi).
+    // Flyers/imágenes de eventos y del contenido general del sitio:
+    // lectura pública, escritura solo para administradores.
+    match /events/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /site/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
   }
 }

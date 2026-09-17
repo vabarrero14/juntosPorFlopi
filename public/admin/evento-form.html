@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evento — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="dashboard.html" class="brand">
+        <span class="brand-emoji">💗</span> Admin Flopi
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+        <li><a href="eventos.html" data-page="eventos">Eventos</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donaciones</a></li>
+        <li><a href="contenido.html" data-page="contenido">Contenido</a></li>
+        <li><a href="administradores.html" data-page="administradores">Administradores</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2 id="form-title">Nuevo evento</h2>
+      <p>Este evento se publica ya aprobado en el calendario.</p>
+    </div>
+
+    <form id="event-form" class="form">
+      <div id="form-message" class="form-message" hidden></div>
+
+      <div class="form-row">
+        <label for="title">Nombre del evento *</label>
+        <input type="text" id="title" name="title" required maxlength="120" />
+      </div>
+
+      <div class="form-row">
+        <label for="category">Categoría *</label>
+        <select id="category" name="category" required></select>
+      </div>
+
+      <div class="form-row">
+        <label for="description">Descripción *</label>
+        <textarea id="description" name="description" required maxlength="800"></textarea>
+      </div>
+
+      <div class="form-row-group">
+        <div class="form-row">
+          <label for="date">Fecha *</label>
+          <input type="date" id="date" name="date" required />
+        </div>
+        <div class="form-row">
+          <label for="time">Hora *</label>
+          <input type="time" id="time" name="time" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="address">Dirección *</label>
+        <input type="text" id="address" name="address" required maxlength="200" />
+      </div>
+
+      <div class="form-row-group">
+        <div class="form-row">
+          <label for="city">Ciudad / localidad</label>
+          <input type="text" id="city" name="city" maxlength="100" />
+        </div>
+        <div class="form-row">
+          <label for="mapsUrl">Link a Google Maps</label>
+          <input type="url" id="mapsUrl" name="mapsUrl" placeholder="https://maps.google.com/..." />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="organizer">Organiza *</label>
+        <input type="text" id="organizer" name="organizer" required maxlength="120" />
+      </div>
+
+      <div class="form-row">
+        <label for="organizerContact">Contacto del organizador</label>
+        <input type="text" id="organizerContact" name="organizerContact" maxlength="150" />
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button type="submit" class="btn btn-primary" id="submit-btn">Guardar</button>
+        <a href="eventos.html" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </main>
+
+  <script type="module" src="js/evento-form.js"></script>
+</body>
+</html>

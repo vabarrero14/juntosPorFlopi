@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="dashboard.html" class="brand">
+        <span class="brand-emoji">💗</span> Admin Flopi
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+        <li><a href="eventos.html" data-page="eventos">Eventos</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donaciones</a></li>
+        <li><a href="contenido.html" data-page="contenido">Contenido</a></li>
+        <li><a href="administradores.html" data-page="administradores">Administradores</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2>Dashboard</h2>
+      <p>Resumen rápido del estado de los eventos.</p>
+    </div>
+
+    <div id="dashboard-stats" class="cards-grid">
+      <p class="text-center">Cargando…</p>
+    </div>
+
+    <div class="cards-grid" style="margin-top: 32px;">
+      <a href="eventos.html?tab=pending" class="card">
+        <h3 class="mt-0">🕒 Revisar propuestas pendientes</h3>
+        <p>Aprobar o rechazar los eventos que propuso la comunidad.</p>
+      </a>
+      <a href="evento-form.html" class="card">
+        <h3 class="mt-0">➕ Cargar un evento</h3>
+        <p>Publicar un evento directamente, ya aprobado.</p>
+      </a>
+      <a href="donaciones.html" class="card">
+        <h3 class="mt-0">💛 Gestionar donaciones</h3>
+        <p>Agregar o editar los medios de donación publicados.</p>
+      </a>
+      <a href="contenido.html" class="card">
+        <h3 class="mt-0">📝 Editar Historia de Flopi</h3>
+        <p>Actualizar el texto de la página "Historia de Flopi".</p>
+      </a>
+    </div>
+  </main>
+
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

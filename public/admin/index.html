@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Administración — Juntos por Flopi</title>
+  <title>Ingresar — Administración Juntos por Flopi</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="../css/styles.css" />
@@ -12,30 +12,48 @@
   <header class="site-header">
     <nav class="nav-bar">
       <a href="../index.html" class="brand">
-        <span class="brand-emoji">💗</span> Juntos por Flopi
+        <span class="brand-emoji">💗</span> Juntos por Flopi — Admin
       </a>
     </nav>
   </header>
 
   <main class="container section text-center">
-    <div class="card" style="max-width: 480px; margin: 0 auto;">
-      <h2 class="mt-0">Panel de administración</h2>
-      <p>
-        El panel para aprobar eventos, gestionar donaciones y editar el
-        contenido del sitio todavía no está construido (próxima fase del
-        proyecto).
-      </p>
-      <p class="form-help">
-        Mientras tanto, los eventos y donaciones se pueden cargar manualmente
-        desde la consola de Firebase (Firestore Database), siguiendo la
-        estructura documentada en <code>PROMPT.md</code>.
-      </p>
-      <a href="../index.html" class="btn btn-outline">Volver al inicio</a>
+    <div class="card" style="max-width: 440px; margin: 0 auto;">
+      <div id="loading-section">
+        <p>Verificando acceso…</p>
+      </div>
+
+      <div id="login-section" hidden>
+        <h2 class="mt-0">Panel de administración</h2>
+        <p class="form-help">Ingresá con la cuenta de Google que tenga acceso.</p>
+        <div id="login-error" class="form-message error" hidden></div>
+        <button type="button" id="google-signin-btn" class="btn btn-primary">
+          Ingresar con Google
+        </button>
+      </div>
+
+      <div id="denied-section" hidden>
+        <h2 class="mt-0">Sin acceso</h2>
+        <p>
+          La cuenta <strong id="denied-email"></strong> todavía no tiene permiso
+          para entrar al panel.
+        </p>
+        <p class="form-help">
+          Pedile a un administrador que agregue tu email desde "Administradores",
+          o si sos la primera persona en usar el panel, seguí los pasos del
+          README del proyecto para crear el primer admin.
+        </p>
+        <button type="button" id="sign-out-btn" class="btn btn-outline">
+          Salir e ingresar con otra cuenta
+        </button>
+      </div>
     </div>
   </main>
 
   <footer class="site-footer container">
     <p>Hecho con 💗 por la familia y amigos de Flopi.</p>
   </footer>
+
+  <script type="module" src="js/login.js"></script>
 </body>
 </html>

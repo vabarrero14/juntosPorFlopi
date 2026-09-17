@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administradores — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="dashboard.html" class="brand">
+        <span class="brand-emoji">💗</span> Admin Flopi
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+        <li><a href="eventos.html" data-page="eventos">Eventos</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donaciones</a></li>
+        <li><a href="contenido.html" data-page="contenido">Contenido</a></li>
+        <li><a href="administradores.html" data-page="administradores">Administradores</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2>Administradores</h2>
+      <p>Quiénes pueden entrar a este panel.</p>
+    </div>
+
+    <div id="owner-only-notice" class="empty-state" hidden style="margin-bottom: 20px;">
+      Solo un administrador "owner" puede agregar o quitar administradores.
+      Podés ver la lista, pero no editarla.
+    </div>
+
+    <form id="add-admin-form" class="form" style="margin-bottom: 32px;">
+      <div id="form-message" class="form-message" hidden></div>
+      <div class="form-row-group">
+        <div class="form-row">
+          <label for="new-admin-email">Email de Google *</label>
+          <input type="email" id="new-admin-email" name="email" required placeholder="nombre@gmail.com" />
+        </div>
+        <div class="form-row">
+          <label for="new-admin-role">Rol *</label>
+          <select id="new-admin-role" name="role" required>
+            <option value="editor">Editor</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="add-admin-btn">Agregar administrador</button>
+    </form>
+
+    <div id="admins-list"></div>
+  </main>
+
+  <script type="module" src="js/administradores.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eventos — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="dashboard.html" class="brand">
+        <span class="brand-emoji">💗</span> Admin Flopi
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+        <li><a href="eventos.html" data-page="eventos">Eventos</a></li>
+        <li><a href="donaciones.html" data-page="donaciones">Donaciones</a></li>
+        <li><a href="contenido.html" data-page="contenido">Contenido</a></li>
+        <li><a href="administradores.html" data-page="administradores">Administradores</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title" style="text-align: left; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2 class="mt-0 mb-0">Eventos</h2>
+        <p class="mb-0">Revisá propuestas y gestioná todos los eventos.</p>
+      </div>
+      <a href="evento-form.html" class="btn btn-primary">+ Nuevo evento</a>
+    </div>
+
+    <div class="admin-tabs" id="tabs">
+      <button type="button" class="admin-tab" data-tab="pending">Pendientes</button>
+      <button type="button" class="admin-tab" data-tab="approved">Aprobados</button>
+      <button type="button" class="admin-tab" data-tab="rejected">Rechazados</button>
+      <button type="button" class="admin-tab" data-tab="all">Todos</button>
+    </div>
+
+    <div id="events-list"></div>
+  </main>
+
+  <script type="module" src="js/eventos.js"></script>
+</body>
+</html>
