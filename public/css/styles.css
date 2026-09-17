@@ -200,12 +200,14 @@ h1, h2, h3 {
 .hero-bg {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 460px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1600px;
+  height: 620px;
   background-image: linear-gradient(180deg, rgba(51, 38, 43, 0.35), var(--color-hero-dark)), url("../img/flopi-hero.jpg");
   background-size: cover;
-  background-position: 50% 60%;
+  background-position: 50% 54%;
   background-repeat: no-repeat;
 }
 
