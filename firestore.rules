@@ -7,17 +7,27 @@ service cloud.firestore {
     // "bootstrapear" el primer admin manualmente desde la consola de
     // Firebase sin necesitar conocer su uid: alcanza con crear un
     // documento admins/{email}.
+    //
+    // callerEmail() usa token.get(...) (acceso seguro) en vez de
+    // token.email: alguien autenticado de forma anónima (subastas) no
+    // tiene claim de email, y accederlo con ".email" directamente
+    // hace explotar la regla entera incluso dentro de un "||", porque
+    // el OR de Firestore Rules no hace short-circuit ante errores.
+    function callerEmail() {
+      return request.auth != null ? request.auth.token.get('email', null) : null;
+    }
+
     function adminDoc() {
-      return get(/databases/$(database)/documents/admins/$(request.auth.token.email));
+      return get(/databases/$(database)/documents/admins/$(callerEmail()));
     }
 
     function isAdmin() {
-      return request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+      return callerEmail() != null &&
+        exists(/databases/$(database)/documents/admins/$(callerEmail()));
     }
 
     function isOwner() {
-      return request.auth != null && isAdmin() && adminDoc().data.role == 'owner';
+      return isAdmin() && adminDoc().data.role == 'owner';
     }
 
     // Eventos: lectura pública solo de aprobados, cualquiera puede proponer
@@ -64,14 +74,106 @@ service cloud.firestore {
       allow read: if isAdmin();
 
       allow create: if isOwner() || (
-        request.auth != null
-        && request.auth.token.email == 'vabarreto14@gmail.com'
+        callerEmail() == 'vabarreto14@gmail.com'
         && email == 'vabarreto14@gmail.com'
         && request.resource.data.email == 'vabarreto14@gmail.com'
         && request.resource.data.role == 'owner'
       );
 
       allow update, delete: if isOwner();
+    }
+
+    // ---------------------------------------------------------------
+    // Subastas. Cualquiera puede ofertar sin crear cuenta (Firebase
+    // Anonymous Auth le da un uid), pero la validación de la oferta
+    // (monto mínimo, que la pieza siga "live", y la extensión
+    // anti-sniping del reloj) la hacen estas reglas, usando
+    // request.time — la hora real del servidor, no la del celular de
+    // quien oferta.
+    //
+    // Cada pieza guarda en el propio documento el estado "oficial":
+    // currentAmount / minNextBid / endsAt. Ofertar es, en una sola
+    // transacción atómica del lado del cliente: (1) crear el documento
+    // en auctionBids con status validado abajo, (2) actualizar esos
+    // campos cacheados en auctionItems, y (3) guardar el celular en
+    // auctionContacts. Las tres reglas se evalúan todas contra el
+    // mismo snapshot "antes" de la base, así que no hay forma de que
+    // el cliente arme una combinación inconsistente que pase las tres.
+    function auctionItemBefore() { return resource.data; }
+    function auctionItemAfter() { return request.resource.data; }
+
+    // La pieza se puede actualizar como resultado de una oferta
+    // pública válida, además de por un admin.
+    function isValidPublicBidUpdate() {
+      let before = auctionItemBefore();
+      let after = auctionItemAfter();
+      let changedKeys = after.diff(before).affectedKeys();
+      let allowedKeys = ['currentAmount', 'currentBidderName', 'currentBidderUid', 'minNextBid', 'endsAt', 'bidCount', 'updatedAt'];
+      // endsAt/closedAt/createdAt/updatedAt se guardan como epoch-ms
+      // (number), no como Timestamp, para poder manejarlos igual en el
+      // cliente (Date.now()) y en las reglas: por eso acá se compara
+      // siempre contra request.time.toMillis(), nunca contra
+      // request.time directamente (son tipos distintos en Rules).
+      let nowMs = request.time.toMillis();
+      let noExtensionNeeded = before.endsAt - nowMs > before.extendMin * 60000;
+      return request.auth != null
+        && before.status == 'live'
+        && after.status == 'live'
+        && nowMs < before.endsAt
+        && changedKeys.hasOnly(allowedKeys)
+        && after.currentAmount >= before.minNextBid
+        && after.minNextBid == after.currentAmount + before.inc
+        && after.currentBidderUid == request.auth.uid
+        && after.currentBidderName is string && after.currentBidderName.size() > 0
+        && after.bidCount == (before.bidCount == null ? 0 : before.bidCount) + 1
+        && (
+          noExtensionNeeded
+            ? after.endsAt == before.endsAt
+            : (after.endsAt >= nowMs + before.extendMin * 60000 - 5000
+               && after.endsAt <= nowMs + before.extendMin * 60000 + 5000)
+        );
+    }
+
+    function isValidPublicBidCreate() {
+      let b = request.resource.data;
+      let item = get(/databases/$(database)/documents/auctionItems/$(b.itemId)).data;
+      return request.auth != null
+        && b.keys().hasOnly(['itemId', 'name', 'amount', 'uid', 'at', 'annulled', 'manual'])
+        && b.uid == request.auth.uid
+        && b.at == request.time
+        && b.annulled == false
+        && b.manual == false
+        && b.name is string && b.name.size() > 0
+        && item.status == 'live'
+        && request.time.toMillis() < item.endsAt
+        && b.amount >= item.minNextBid;
+    }
+
+    match /auctionItems/{itemId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isValidPublicBidUpdate();
+      allow delete: if isAdmin();
+    }
+
+    // Historial de ofertas: lectura pública (nombre y monto son
+    // públicos), pero solo se puede crear una oferta "a mano" sin ser
+    // admin si pasa isValidPublicBidCreate(); anular/restaurar una
+    // oferta (o cargarla a mano en nombre de alguien de WhatsApp) es
+    // exclusivo del moderador.
+    match /auctionBids/{bidId} {
+      allow read: if true;
+      allow create: if isAdmin() || isValidPublicBidCreate();
+      allow update, delete: if isAdmin();
+    }
+
+    // El celular de quien oferta: solo lo puede leer un admin. Quien
+    // oferta puede guardar su propio contacto (uid del path = su uid),
+    // pero no leerlo de vuelta ni leer el de otros.
+    match /auctionContacts/{uid}/bids/{bidId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+      allow update, delete: if isAdmin();
     }
   }
 }
