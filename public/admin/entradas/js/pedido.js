@@ -218,7 +218,7 @@ function renderTickets() {
       </div>
     `;
     const link = document.createElement("a");
-    link.href = `entrada.html?c=${t.id}`;
+    link.href = ticketUrl(t.id);
     link.target = "_blank";
     link.rel = "noopener";
     link.className = "btn btn-outline";

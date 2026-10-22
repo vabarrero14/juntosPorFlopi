@@ -88,7 +88,7 @@ function renderCourtesyList(tickets) {
       </div>
     `;
     const link = document.createElement("a");
-    link.href = `entrada.html?c=${t.id}`;
+    link.href = `${window.location.origin}/entrada.html?c=${t.id}`;
     link.target = "_blank";
     link.rel = "noopener";
     link.className = "btn btn-outline";

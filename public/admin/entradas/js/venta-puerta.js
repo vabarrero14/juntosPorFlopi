@@ -119,7 +119,7 @@ async function onSubmit(e) {
         ${tickets
           .map(
             (t) => `<div class="entry-row"><span class="ticket-code">${t.shortCode}</span>
-              <a class="btn btn-outline" href="../../entrada.html?c=${t.code}" target="_blank" rel="noopener">Ver entrada</a></div>`
+              <a class="btn btn-outline" href="${window.location.origin}/entrada.html?c=${t.code}" target="_blank" rel="noopener">Ver entrada</a></div>`
           )
           .join("")}
       `;
