@@ -21,6 +21,7 @@
         <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
         <li><a href="eventos.html" data-page="eventos">Eventos</a></li>
         <li><a href="subastas.html" data-page="subastas">Subastas</a></li>
+        <li><a href="entradas/index.html" data-page="entradas">Entradas</a></li>
         <li><a href="donaciones.html" data-page="donaciones">Donaciones</a></li>
         <li><a href="contenido.html" data-page="contenido">Contenido</a></li>
         <li><a href="administradores.html" data-page="administradores">Administradores</a></li>
@@ -96,6 +97,15 @@
       <div class="form-row">
         <label for="instagramUrl">Link al posteo de Instagram (opcional)</label>
         <input type="url" id="instagramUrl" name="instagramUrl" placeholder="https://instagram.com/p/..." />
+      </div>
+
+      <div class="form-row">
+        <label><input type="checkbox" id="hasTickets" name="hasTickets" /> Vende entradas por el módulo de Entradas</label>
+        <p class="form-help">
+          Tildá esto para Flopi Fest: en el calendario público va a aparecer un botón "Conseguir entrada"
+          que lleva a la página del evento. Configurá precios/capacidad desde
+          <a href="entradas/config.html" target="_blank" rel="noopener">Entradas → Configuración</a>.
+        </p>
       </div>
 
       <div style="display: flex; gap: 12px; align-items: center;">

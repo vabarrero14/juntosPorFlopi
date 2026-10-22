@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reportes — Entradas — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="index.html" class="brand">
+        <span class="brand-emoji">🎟️</span> Entradas — Flopi Fest
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="index.html" data-page="inicio">Inicio</a></li>
+        <li><a href="pedidos.html" data-page="pedidos">Pedidos</a></li>
+        <li><a href="puerta.html" data-page="puerta">Puerta</a></li>
+        <li><a href="venta-puerta.html" data-page="venta-puerta">Venta en puerta</a></li>
+        <li data-admin-only><a href="reportes.html" data-page="reportes">Reportes</a></li>
+        <li data-admin-only><a href="config.html" data-page="config">Configuración</a></li>
+        <li data-admin-only><a href="personal.html" data-page="personal">Personal</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="entradas-role-badge" class="category-tag"></span>
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title" style="text-align: left; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2 class="mt-0 mb-0">Reportes</h2>
+        <p class="mb-0">Recaudación, pendientes y entradas de Flopi Fest.</p>
+      </div>
+      <div>
+        <a href="respaldo.html" class="btn btn-outline">Lista de respaldo</a>
+        <button type="button" class="btn btn-outline" id="export-orders-btn">Exportar pedidos (CSV)</button>
+        <button type="button" class="btn btn-outline" id="export-tickets-btn">Exportar entradas (CSV)</button>
+      </div>
+    </div>
+
+    <div id="report-root"><p class="text-center">Cargando…</p></div>
+
+    <div class="card" style="border-color: #f0b9c2;">
+      <h3 class="mt-0">Zona de riesgo</h3>
+      <p class="form-help">
+        Después del evento, podés borrar nombres y celulares de todos los
+        pedidos y entradas de una sola vez. Los montos, estados y códigos
+        quedan igual, para que los reportes históricos sigan teniendo
+        sentido. <strong>No se puede deshacer.</strong>
+      </p>
+      <button type="button" class="btn btn-outline" id="anonymize-btn">Anonimizar nombres y celulares</button>
+    </div>
+  </main>
+
+  <script type="module" src="js/reportes.js"></script>
+</body>
+</html>

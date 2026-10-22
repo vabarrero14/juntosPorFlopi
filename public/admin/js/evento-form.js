@@ -6,6 +6,7 @@ import {
   createEventDirect,
   updateEvent,
 } from "../../js/events-service.js";
+import { FLOPI_FEST_ID } from "../../js/ticket-event-constants.js";
 
 const form = document.getElementById("event-form");
 const formTitle = document.getElementById("form-title");
@@ -61,6 +62,7 @@ async function prefillForm() {
     form.organizer.value = event.organizer;
     form.organizerContact.value = event.organizerContact ?? "";
     form.instagramUrl.value = event.instagramUrl ?? "";
+    form.hasTickets.checked = Boolean(event.ticketEventId);
   } catch (error) {
     console.error("Error cargando el evento:", error);
     showMessage("No pudimos cargar el evento para editarlo.", "error");
@@ -96,6 +98,7 @@ async function init() {
       organizer: formData.get("organizer").trim(),
       organizerContact: formData.get("organizerContact").trim(),
       instagramUrl: formData.get("instagramUrl").trim(),
+      ticketEventId: form.hasTickets.checked ? FLOPI_FEST_ID : null,
     };
 
     submitBtn.disabled = true;

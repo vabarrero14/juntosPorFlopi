@@ -23,6 +23,7 @@ const modalOrganizer = document.getElementById("modal-organizer");
 const modalDescription = document.getElementById("modal-description");
 const modalMapsLink = document.getElementById("modal-maps-link");
 const modalInstagramLink = document.getElementById("modal-instagram-link");
+const modalTicketsLink = document.getElementById("modal-tickets-link");
 
 let allEvents = [];
 let currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -65,6 +66,13 @@ function openModal(event) {
     modalInstagramLink.hidden = false;
   } else {
     modalInstagramLink.hidden = true;
+  }
+
+  if (event.ticketEventId) {
+    modalTicketsLink.href = "flopi-fest.html";
+    modalTicketsLink.hidden = false;
+  } else {
+    modalTicketsLink.hidden = true;
   }
 
   modal.hidden = false;

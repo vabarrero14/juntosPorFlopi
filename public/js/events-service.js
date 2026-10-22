@@ -56,6 +56,10 @@ function buildEventFields(input, Timestamp) {
     category: input.category,
     imageUrl: null,
     instagramUrl: input.instagramUrl || null,
+    // Si el evento vende entradas por el módulo de Entradas, acá va el
+    // id del documento en ticketEvents (hoy siempre FLOPI_FEST_ID, ver
+    // ticket-event-constants.js). null = evento sin entradas.
+    ticketEventId: input.ticketEventId || null,
   };
 }
 

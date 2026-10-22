@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Puerta — Entradas — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="index.html" class="brand">
+        <span class="brand-emoji">🎟️</span> Entradas — Flopi Fest
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="index.html" data-page="inicio">Inicio</a></li>
+        <li><a href="pedidos.html" data-page="pedidos">Pedidos</a></li>
+        <li><a href="puerta.html" data-page="puerta">Puerta</a></li>
+        <li><a href="venta-puerta.html" data-page="venta-puerta">Venta en puerta</a></li>
+        <li data-admin-only><a href="reportes.html" data-page="reportes">Reportes</a></li>
+        <li data-admin-only><a href="config.html" data-page="config">Configuración</a></li>
+        <li data-admin-only><a href="personal.html" data-page="personal">Personal</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="entradas-role-badge" class="category-tag"></span>
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title" style="text-align: left; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <h2 class="mt-0 mb-0">Puerta</h2>
+      <div id="counter" class="badge" style="font-size: 1rem;">— / —</div>
+    </div>
+
+    <div id="scanner-card" class="card">
+      <div id="camera-error" class="form-message error" hidden></div>
+      <video id="scanner-video" playsinline muted style="width: 100%; max-width: 420px; display: block; margin: 0 auto; border-radius: 12px; background: #000;"></video>
+      <canvas id="scanner-canvas" hidden></canvas>
+      <p class="text-center form-help">Apuntá la cámara al código QR de la entrada.</p>
+      <div class="text-center">
+        <button type="button" id="toggle-camera-btn" class="btn btn-outline">Pausar cámara</button>
+      </div>
+    </div>
+
+    <div id="result-card" class="card" hidden>
+      <div id="result-box" class="text-center"></div>
+      <div id="result-actions" class="text-center" style="margin-top: 12px;"></div>
+    </div>
+
+    <div class="card">
+      <h3 class="mt-0">Buscar manualmente</h3>
+      <input id="search-input" placeholder="Nombre, celular o código corto" />
+      <div id="search-results" style="margin-top: 12px;"></div>
+    </div>
+  </main>
+
+  <script type="module" src="js/puerta.js"></script>
+</body>
+</html>

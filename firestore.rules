@@ -175,5 +175,272 @@ service cloud.firestore {
       allow create: if isAdmin() || (request.auth != null && request.auth.uid == uid);
       allow update, delete: if isAdmin();
     }
+
+    // ---------------------------------------------------------------
+    // Entradas (Flopi Fest y futuros eventos con control de acceso).
+    //
+    // Staff del evento: "vendedor" y "puerta" se loguean con la misma
+    // cuenta de Google que el resto del panel (mismo patrón que el
+    // moderador de subastas), pero quedan en una colección aparte
+    // (eventStaff, no admins) para que NO hereden acceso a
+    // eventos/donaciones/contenido/administradores. En esta fase ambos
+    // roles tienen los mismos permisos de escritura (pueden vender,
+    // cobrar, emitir y escanear) -- el campo "role" es solo para
+    // mostrar/filtrar en los reportes, no para restringir acciones.
+    // "Administrador" de este módulo es el isAdmin() que ya existe
+    // (owner + editor), sin un nivel nuevo.
+    function eventStaffDoc() {
+      return get(/databases/$(database)/documents/eventStaff/$(callerEmail()));
+    }
+
+    function isEventStaff() {
+      return isAdmin() || (
+        callerEmail() != null &&
+        exists(/databases/$(database)/documents/eventStaff/$(callerEmail())) &&
+        eventStaffDoc().data.active == true
+      );
+    }
+
+    // Config del evento: nombre, lugar, fecha, precios, capacidad.
+    // issuedCount es un contador cacheado que solo se mueve con la
+    // aritmética exacta validada en isValidIssueCounterUpdate()/
+    // isValidVoidCounterUpdate() de acá abajo (igual patrón que
+    // currentAmount en las subastas), o libremente por un admin.
+    match /ticketEvents/{ticketEventId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isValidIssueCounterUpdate() || isValidVoidCounterUpdate();
+
+      function isValidIssueCounterUpdate() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        return isEventStaff()
+          && changed.hasOnly(['issuedCount'])
+          && after.issuedCount == before.issuedCount + 1
+          && before.issuedCount < before.capacity;
+      }
+
+      // Anular una entrada libera el cupo. Lo hace un admin (ver
+      // "tickets" más abajo), así que acá solo hace falta que la
+      // aritmética sea exacta -- isAdmin() ya se cubre en el "allow
+      // update" de arriba, esta función es la rama no-admin por si
+      // algún día se delega, hoy en la práctica nunca se usa sin admin.
+      function isValidVoidCounterUpdate() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        return isEventStaff()
+          && changed.hasOnly(['issuedCount'])
+          && after.issuedCount == before.issuedCount - 1
+          && before.issuedCount > 0;
+      }
+    }
+
+    // Personal del evento (vendedor/puerta). Solo un admin agrega o
+    // quita; cualquier miembro del staff puede ver la lista (para que,
+    // por ejemplo, el admin arme los reportes por vendedor).
+    match /eventStaff/{email} {
+      allow read: if isEventStaff();
+      allow write: if isAdmin();
+    }
+
+    // Pedidos. Cualquiera del staff puede crear (el vendedor/puerta
+    // queda forzado a sí mismo como sellerUid), y leer los propios;
+    // un admin ve y edita todos. Cancelar un pedido es exclusivo de
+    // un admin (igual que "anula" en el resto del módulo).
+    //
+    // "Aplicar" un pago (sumarlo a amountConfirmedTotal y recalcular
+    // el status) es una operación aparte de crear el pago -- Firestore
+    // Rules no puede validar en una sola transacción que un documento
+    // recién creado en ESA MISMA transacción tenga tal o cual valor
+    // (cada escritura se valida contra el estado anterior a la
+    // transacción, nunca contra lo que escriben sus hermanas). Por eso
+    // el cliente hace dos pasos: (1) crear el pago, (2) en una
+    // transacción aparte, aplicar SU monto al pedido leyendo el pago ya
+    // confirmado con get(). appliedPaymentIds evita que el mismo pago
+    // se aplique dos veces si el paso 2 se reintenta.
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isEventStaff() && resource.data.sellerUid == request.auth.uid);
+
+      allow create: if isEventStaff() && isValidOrderCreate();
+      allow update: if isAdmin() || isValidOrderPaymentBump();
+      allow delete: if false; // los pedidos no se borran, se anulan (status)
+
+      function isValidOrderCreate() {
+        let b = request.resource.data;
+        let event = get(/databases/$(database)/documents/ticketEvents/$(b.ticketEventId)).data;
+        let expectedPrice = b.channel == 'puerta' ? event.priceDoor : event.priceEarly;
+        return b.keys().hasAll([
+            'ticketEventId', 'buyerName', 'buyerPhone', 'quantity', 'channel',
+            'unitPrice', 'total', 'sellerUid', 'sellerEmail', 'status',
+            'amountConfirmedTotal', 'appliedPaymentIds', 'createdAt'
+          ])
+          && b.sellerUid == request.auth.uid
+          && b.sellerEmail == callerEmail()
+          && b.quantity is int && b.quantity > 0
+          && (b.channel == 'anticipada' || b.channel == 'puerta')
+          && b.unitPrice == expectedPrice
+          && b.total == b.quantity * b.unitPrice
+          && b.status == 'reserved'
+          && b.amountConfirmedTotal == 0
+          && b.appliedPaymentIds.size() == 0
+          && b.createdAt == request.time;
+      }
+
+      function isValidOrderPaymentBump() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        let newId = after.appliedPaymentIds[after.appliedPaymentIds.size() - 1];
+        let payment = get(/databases/$(database)/documents/payments/$(newId)).data;
+        let newTotal = before.amountConfirmedTotal + payment.amount;
+        return isEventStaff()
+          && changed.hasOnly(['amountConfirmedTotal', 'status', 'appliedPaymentIds'])
+          && after.appliedPaymentIds.size() == before.appliedPaymentIds.size() + 1
+          && !(newId in before.appliedPaymentIds)
+          && after.appliedPaymentIds == before.appliedPaymentIds.concat([newId])
+          && payment.orderId == orderId
+          && payment.receivedByUid == request.auth.uid
+          && payment.status == 'confirmed'
+          && after.amountConfirmedTotal == newTotal
+          && newTotal <= before.total
+          && after.status == (newTotal >= before.total ? 'paid' : 'partial');
+      }
+    }
+
+    // Pagos. Nunca se borran, solo se anulan (status: voided, por un
+    // admin). Un pago en efectivo lo carga el staff y queda confirmado
+    // al instante (quien lo recibe lo tiene en la mano); una
+    // transferencia queda "por confirmar" hasta que un admin la valida
+    // contra el banco -- esa confirmación, igual que anular, es
+    // exclusiva de un admin.
+    //
+    // Cuando el pago en efectivo se crea ya confirmado, la misma
+    // transacción del cliente también actualiza orders/{orderId} para
+    // sumar el monto a amountConfirmedTotal y recalcular el status
+    // (reserved/partial/paid) -- la regla de "orders" de abajo valida
+    // esa aritmética exacta para que nadie pueda inflarla.
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || (isEventStaff() && resource.data.receivedByUid == request.auth.uid);
+
+      allow create: if isEventStaff() && isValidPaymentCreate();
+      allow update: if isAdmin();
+      allow delete: if false;
+
+      function isValidPaymentCreate() {
+        let b = request.resource.data;
+        let order = get(/databases/$(database)/documents/orders/$(b.orderId)).data;
+        return b.keys().hasAll([
+            'orderId', 'ticketEventId', 'amount', 'method', 'reference', 'receivedByUid',
+            'receivedByEmail', 'status', 'settled', 'createdAt'
+          ])
+          && b.ticketEventId == order.ticketEventId
+          && b.receivedByUid == request.auth.uid
+          && b.receivedByEmail == callerEmail()
+          && b.amount is number && b.amount > 0
+          && order.status != 'cancelled'
+          && b.settled == false
+          && b.createdAt == request.time
+          && (
+            (b.method == 'cash' && b.status == 'confirmed')
+            || (b.method == 'transfer' && b.status == 'pending_confirm' && b.reference is string && b.reference.size() > 0)
+          );
+      }
+    }
+
+    // Entradas. La emisión (ticket nuevo + +1 en ticketEvents.issuedCount
+    // en la misma transacción) la puede hacer cualquiera del staff,
+    // respetando el cupo salvo que sea un admin (ver isValidIssueCounterUpdate
+    // arriba). El check-in es la parte crítica: la transición
+    // issued -> checked_in es atómica contra el mismo snapshot "antes",
+    // así que si dos celulares escanean a la vez, el segundo pierde la
+    // carrera y su propio cliente le muestra "ya ingresó" (porque su
+    // update deja de cumplir before.status == 'issued'). Autorizar un
+    // reingreso es la única escritura permitida sobre una entrada que ya
+    // está checked_in.
+    match /tickets/{ticketId} {
+      allow read: if isEventStaff();
+      // Lectura pública de UNA entrada puntual por su código largo (URL
+      // no adivinable): "get" puntual sí, pero nunca "list" -- así nadie
+      // puede enumerar entradas ajenas sin loguearse.
+      allow get: if true;
+
+      allow create: if isEventStaff() && isValidTicketCreate();
+      allow update: if isAdmin() || isValidCheckIn() || isValidReentry();
+      allow delete: if false;
+
+      function isValidTicketCreate() {
+        let b = request.resource.data;
+        // Una cortesía no tiene pedido detrás (orderId == null); una
+        // entrada paga sí, y exige que ESE pedido ya esté totalmente
+        // cobrado y confirmado (status == 'paid'). No se limita acá
+        // cuántas entradas salen de un mismo pedido -- la pantalla de
+        // emisión controla eso contra orderId/quantity; no es una
+        // invariante de seguridad (nadie gana nada falseándola), así
+        // que no vale la complejidad de otro contador cruzado.
+        let orderOk = b.type == 'courtesy'
+          ? b.orderId == null
+          : get(/databases/$(database)/documents/orders/$(b.orderId)).data.status == 'paid';
+        // Chequeo de cupo redundante con isValidIssueCounterUpdate() de
+        // ticketEvents (que es la que de verdad serializa la carrera
+        // cuando dos personas emiten al mismo tiempo, porque las dos
+        // transacciones compiten por ESE documento compartido). Esta
+        // copia acá es una red adicional para el uso normal de la app,
+        // asumiendo buena fe del staff -- no hay forma 100% hermética
+        // de OBLIGAR con solo Rules a que la emisión de la entrada y el
+        // +1 del contador viajen siempre juntas sin Cloud Functions.
+        let event = get(/databases/$(database)/documents/ticketEvents/$(b.ticketEventId)).data;
+        return b.keys().hasAll([
+            'ticketEventId', 'orderId', 'code', 'shortCode', 'type', 'status',
+            'holderName', 'holderPhone', 'issuedByUid', 'issuedByEmail',
+            'reentryCount', 'createdAt'
+          ])
+          && b.code is string && b.code.size() >= 22
+          && b.status == 'issued'
+          && (b.type == 'paid' || b.type == 'courtesy')
+          && orderOk
+          && (event.issuedCount < event.capacity || isAdmin())
+          && b.issuedByUid == request.auth.uid
+          && b.issuedByEmail == callerEmail()
+          && b.reentryCount == 0
+          && b.createdAt == request.time;
+      }
+
+      function isValidCheckIn() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        return isEventStaff()
+          && before.status == 'issued'
+          && after.status == 'checked_in'
+          && changed.hasOnly(['status', 'checkedInAt', 'checkedInByUid', 'checkedInByEmail'])
+          && after.checkedInAt == request.time
+          && after.checkedInByUid == request.auth.uid
+          && after.checkedInByEmail == callerEmail();
+      }
+
+      function isValidReentry() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        return isEventStaff()
+          && before.status == 'checked_in'
+          && after.status == 'checked_in'
+          && changed.hasOnly(['reentryCount'])
+          && after.reentryCount == before.reentryCount + 1;
+      }
+    }
+
+    // Auditoría: nadie, ni un admin, puede editar o borrar un registro
+    // ya creado -- es el historial de "quién, qué y cuándo".
+    match /auditLog/{entryId} {
+      allow read: if isAdmin();
+      allow create: if isEventStaff()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorEmail == callerEmail()
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
   }
 }

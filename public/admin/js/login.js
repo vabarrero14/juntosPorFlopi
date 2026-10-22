@@ -93,6 +93,14 @@ async function init() {
         window.location.href = "dashboard.html";
         return;
       }
+      // No es admin del panel general -- puede igual ser staff del
+      // módulo de entradas (vendedor/puerta), que tiene su propia
+      // sección y no ve el resto del panel.
+      const staffSnap = await getDoc(doc(db, "eventStaff", user.email));
+      if (staffSnap.exists() && staffSnap.data().active) {
+        window.location.href = "entradas/index.html";
+        return;
+      }
       showDenied(user);
     } catch (error) {
       console.error("Error verificando acceso:", error);

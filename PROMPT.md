@@ -200,6 +200,98 @@ centralice toda esa información en un solo lugar, con foco en:
    WhatsApp, `.ics`, SEO/OG tags, analytics.
 6. **Fase 6 — Publicación**: conectar dominio propio a Firebase Hosting.
 
+## Módulo de entradas y control de acceso (Flopi Fest)
+
+Gestión interna de venta de entradas y control de ingreso para eventos
+puntuales con entrada paga (el primero: "Flopi Fest", show solidario). Vive
+dentro de este mismo proyecto, vinculado al evento en el calendario público,
+pero con su propia página. **No integra pasarelas de pago**: los cobros se
+hacen por fuera (efectivo/transferencia) y acá solo se registran.
+
+### Roles
+
+- **Administrador**: el `isAdmin()` que ya existe (`owner`/`editor` en
+  `admins`). Ve todo, confirma transferencias, anula, configura el evento y
+  ve reportes.
+- **Vendedor** y **Puerta**: colección nueva `eventStaff/{email}`, login con
+  Google (mismo patrón que el resto del panel, sin password aparte). En esta
+  fase ambos roles tienen los mismos permisos de escritura (cargan pedidos,
+  cobran, emiten entradas, cortesías, escanean, autorizan reingreso) — el
+  campo `role` es solo para filtrar/mostrar en los reportes, no restringe
+  acciones. Pensado para que, el día del evento, cualquiera de los dos pueda
+  cubrir la venta en puerta.
+
+### Estructura de datos (Firestore)
+
+```
+ticketEvents/{id}
+  name, venue, date (Timestamp), doorsOpenTime,
+  priceEarly, priceDoor, capacity, currency: "PYG",
+  issuedCount,     // contador cacheado, solo se mueve con aritmética exacta
+                    // validada en Rules (o libre para un admin)
+  salesOpen: boolean
+
+eventStaff/{email}
+  email, role: "vendedor" | "puerta", active, createdAt
+
+orders/{id}           // pedidos
+  ticketEventId, buyerName, buyerPhone, quantity,
+  channel: "anticipada" | "puerta", unitPrice, total,
+  sellerUid, sellerEmail, status: "reserved"|"partial"|"paid"|"cancelled",
+  amountConfirmedTotal, appliedPaymentIds: string[],  // ver nota abajo
+  notes, createdAt
+
+payments/{id}          // pagos — nunca se borran, solo se anulan (admin)
+  orderId, amount, method: "cash"|"transfer",
+  reference,            // n° de comprobante/alias, obligatorio en transferencia
+  receivedByUid, receivedByEmail,
+  status: "pending_confirm"|"confirmed"|"voided", voidReason,
+  settled: boolean,     // "rendido" (cash), lo marca un admin
+  createdAt, confirmedAt, confirmedBy
+
+tickets/{id}            // entradas
+  ticketEventId, orderId (null si es cortesía), code (random ≥128 bits, para
+  el QR), shortCode, type: "paid"|"courtesy", status: "issued"|"checked_in",
+  holderName, holderPhone, issuedByUid, issuedByEmail,
+  checkedInAt, checkedInByUid, checkedInByEmail,
+  reentryCount, createdAt
+
+auditLog/{id}            // append-only, nadie lo edita ni borra
+  actorUid, actorEmail, action, entityType, entityId, details, at
+```
+
+**Nota sobre `amountConfirmedTotal`/`appliedPaymentIds`**: un pago en efectivo
+se crea ya `confirmed`, pero "aplicarlo" al pedido (sumar el monto y
+recalcular `status`) es un segundo paso aparte en el cliente — Firestore
+Rules valida cada escritura contra el estado de la base *antes* de la
+transacción, así que la regla del pedido no puede ver el pago recién creado
+en esa misma transacción. `appliedPaymentIds` evita que el mismo pago se
+cuente dos veces si ese segundo paso se reintenta. Transferencias quedan
+`pending_confirm` hasta que un admin las confirma contra el banco (ahí sí,
+admin tiene vía libre para tocar el pedido sin esta coreografía).
+
+### Reglas de seguridad, en criollo
+
+- `ticketEvents`: lectura pública (no sensible), configuración exclusiva de
+  admin; `issuedCount` solo se mueve de a 1 con la aritmética validada.
+- `orders`/`payments`: el staff crea y lee solo lo propio
+  (`sellerUid`/`receivedByUid` == su uid); un admin ve y edita todo. Anular
+  pedido/pago y confirmar transferencias es admin-only.
+- `tickets`: lectura amplia para cualquiera del staff (necesitan buscar por
+  nombre/celular/código corto); lectura pública solo por `get` puntual con el
+  código largo exacto (nunca `list`), así nadie enumera entradas ajenas. El
+  check-in (`issued` → `checked_in`) es atómico contra el mismo snapshot
+  "antes": si dos celulares escanean a la vez, el segundo pierde la carrera
+  y su cliente muestra "ya ingresó". Autorizar un reingreso es la única
+  escritura permitida sobre una entrada ya ingresada.
+- `auditLog`: create-only, inmutable incluso para un admin.
+
+### Fases
+
+- **Fase 1** (en curso): todo lo anterior.
+- **Fase 2** (no arrancar sin confirmación): modo sin conexión para la
+  puerta y recordatorios por WhatsApp.
+
 ## Resultado esperado de este prompt
 
 Un sitio web publicado con Firebase que centralice la información de Flopi,

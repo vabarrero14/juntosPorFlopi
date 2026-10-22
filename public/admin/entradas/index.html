@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entradas — Administración Juntos por Flopi</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-bar admin-nav-bar">
+      <a href="index.html" class="brand">
+        <span class="brand-emoji">🎟️</span> Entradas — Flopi Fest
+      </a>
+      <ul class="nav-links admin-nav-links">
+        <li><a href="index.html" data-page="inicio">Inicio</a></li>
+        <li><a href="pedidos.html" data-page="pedidos">Pedidos</a></li>
+        <li><a href="puerta.html" data-page="puerta">Puerta</a></li>
+        <li><a href="venta-puerta.html" data-page="venta-puerta">Venta en puerta</a></li>
+        <li data-admin-only><a href="reportes.html" data-page="reportes">Reportes</a></li>
+        <li data-admin-only><a href="config.html" data-page="config">Configuración</a></li>
+        <li data-admin-only><a href="personal.html" data-page="personal">Personal</a></li>
+      </ul>
+      <div class="admin-user">
+        <span id="entradas-role-badge" class="category-tag"></span>
+        <span id="admin-user-email" class="admin-user-email"></span>
+        <button id="admin-logout-btn" class="btn btn-outline" style="padding: 6px 14px;">Salir</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container section">
+    <div class="section-title">
+      <h2>Entradas — Flopi Fest</h2>
+      <p>Venta, pagos, emisión y control de ingreso del show solidario.</p>
+    </div>
+
+    <div class="cards-grid">
+      <a href="pedidos.html" class="card">
+        <h3 class="mt-0">🧾 Pedidos y pagos</h3>
+        <p>Cargar un pedido, registrar cobros y emitir entradas.</p>
+      </a>
+      <a href="puerta.html" class="card">
+        <h3 class="mt-0">📷 Puerta</h3>
+        <p>Escanear entradas, buscar manualmente, ver cuántos entraron.</p>
+      </a>
+      <a href="venta-puerta.html" class="card">
+        <h3 class="mt-0">⚡ Venta en puerta</h3>
+        <p>Pedido + cobro + entrada + ingreso, en un solo paso.</p>
+      </a>
+      <a href="reportes.html" class="card" data-admin-only>
+        <h3 class="mt-0">📊 Reportes</h3>
+        <p>Recaudación, pendientes, efectivo por rendir, exportar CSV.</p>
+      </a>
+      <a href="config.html" class="card" data-admin-only>
+        <h3 class="mt-0">⚙️ Configuración</h3>
+        <p>Hora, precios y capacidad del evento.</p>
+      </a>
+      <a href="personal.html" class="card" data-admin-only>
+        <h3 class="mt-0">👥 Personal</h3>
+        <p>Agregar o quitar vendedores y puerta.</p>
+      </a>
+    </div>
+  </main>
+
+  <script type="module" src="js/index.js"></script>
+</body>
+</html>

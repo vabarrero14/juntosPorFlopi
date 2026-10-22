@@ -783,6 +783,75 @@ textarea {
   border-color: #b3273f;
 }
 
+.badge.paid, .badge.confirmed, .badge.checked_in {
+  background: #e9f7ef;
+  color: #1e7a44;
+  border-color: #bfe6cf;
+}
+
+.badge.partial, .badge.pending_confirm {
+  background: #fff4e0;
+  color: #9a6300;
+  border-color: #f2d9a3;
+}
+
+.badge.reserved, .badge.issued {
+  color: var(--color-muted);
+}
+
+.badge.cancelled, .badge.voided {
+  background: #fbe9ec;
+  color: #b3273f;
+  border-color: #f0b9c2;
+}
+
+.scan-result {
+  padding: 28px 16px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+}
+
+.scan-result h2 {
+  margin: 0 0 6px;
+  font-size: 2rem;
+}
+
+.scan-result.ok {
+  background: #e9f7ef;
+  color: #1e7a44;
+}
+
+.scan-result.already,
+.scan-result.voided {
+  background: #fbe9ec;
+  color: #b3273f;
+}
+
+.scan-result.notfound {
+  background: #fff4e0;
+  color: #9a6300;
+}
+
+.entry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.entry-row:last-child {
+  border-bottom: none;
+}
+
+.ticket-code {
+  font-family: Consolas, Menlo, monospace;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
 .back {
   background: none;
   border: none;
