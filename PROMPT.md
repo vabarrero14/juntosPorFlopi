@@ -245,8 +245,10 @@ orders/{id}           // pedidos
   raffleUnitPrice,        // precio por número al momento de la compra
   raffleNumbers: string[], // números del talonario físico entregados (se cargan
                            // después de crear el pedido, no hay sorteo digital)
-  collaboration: boolean, // paga como una entrada pero no va a venir -> no se
-                           // ofrece emitir QR para esas entradas
+  collaboration: boolean, // paga como una entrada pero en principio no va a
+                           // venir -- es solo informativo: la pantalla de
+                           // emisión igual permite generarle el QR por si al
+                           // final decide asistir
   sellerUid, sellerEmail, status: "reserved"|"partial"|"paid"|"cancelled",
   amountConfirmedTotal, appliedPaymentIds: string[],  // ver nota abajo
   notes, createdAt

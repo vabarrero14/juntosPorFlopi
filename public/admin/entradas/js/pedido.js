@@ -137,7 +137,7 @@ function renderOrderSummary() {
   document.getElementById("p-summary").innerHTML = `
     ${esc(o.buyerPhone)} · ${bits.join(" · ")}<br/>
     Total ${gs(o.total)} · Pagado ${gs(o.amountConfirmedTotal)} · Saldo ${gs(Math.max(0, saldo))}
-    ${o.collaboration ? "<br/><strong>Colaboración: no va a asistir, no se emite entrada.</strong>" : ""}
+    ${o.collaboration ? "<br/><strong>Colaboración: en principio no va a asistir. Si decide venir, se le puede emitir la entrada igual.</strong>" : ""}
   `;
 
   const raffleCard = document.getElementById("raffle-card");
@@ -237,15 +237,18 @@ function ticketUrl(code) {
 
 function renderTickets() {
   const emitCard = document.getElementById("emit-card");
-  const emitRelevant = currentOrder.status === "paid" && currentOrder.quantity > 0 && !currentOrder.collaboration;
+  const emitRelevant = currentOrder.status === "paid" && currentOrder.quantity > 0;
   emitCard.hidden = !emitRelevant;
   if (!emitRelevant) return;
 
   const remaining = currentOrder.quantity - currentTickets.length;
+  const collabNote = currentOrder.collaboration
+    ? " Era una colaboración (no iba a asistir) -- si al final decide venir, emitile la entrada igual."
+    : "";
   document.getElementById("emit-info").textContent =
-    remaining > 0
+    (remaining > 0
       ? `Emitidas ${currentTickets.length} de ${currentOrder.quantity}.`
-      : `Ya se emitieron las ${currentOrder.quantity} entradas de este pedido.`;
+      : `Ya se emitieron las ${currentOrder.quantity} entradas de este pedido.`) + collabNote;
   document.getElementById("emit-btn").hidden = remaining <= 0;
 
   if (!document.getElementById("emit-name").value) {
