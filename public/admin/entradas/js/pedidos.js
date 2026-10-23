@@ -26,16 +26,15 @@ function showMessage(text, type) {
 
 function updatePricePreview() {
   if (!ticketEvent) return;
-  const qty = Math.max(0, Math.round(Number(form.quantity.value) || 0));
+  const qty = Math.max(1, Math.round(Number(form.quantity.value) || 1));
   const unitPrice = form.channel.value === "puerta" ? ticketEvent.priceDoor : ticketEvent.priceEarly;
   const raffleQty = ticketEvent.raffleEnabled ? Math.max(0, Math.round(Number(form.raffleQuantity.value) || 0)) : 0;
   const rafflePrice = ticketEvent.rafflePrice || 0;
   const total = qty * unitPrice + raffleQty * rafflePrice;
 
-  const parts = [];
-  if (qty > 0) parts.push(`${qty} entrada(s) x ${gs(unitPrice)}`);
+  const parts = [`${qty} entrada(s) x ${gs(unitPrice)}`];
   if (raffleQty > 0) parts.push(`${raffleQty} número(s) de rifa x ${gs(rafflePrice)}`);
-  pricePreview.textContent = parts.length ? `${parts.join(" + ")} = ${gs(total)}` : "Completá al menos entradas o números de rifa.";
+  pricePreview.textContent = `${parts.join(" + ")} = ${gs(total)}`;
 }
 
 function renderOrderRow(order) {
@@ -170,14 +169,10 @@ async function init() {
     messageEl.hidden = true;
 
     const channel = form.channel.value;
-    const quantity = Math.max(0, Math.round(Number(form.quantity.value) || 0));
+    const quantity = Math.max(1, Math.round(Number(form.quantity.value) || 1));
     const raffleQuantity = ticketEvent.raffleEnabled ? Math.max(0, Math.round(Number(form.raffleQuantity.value) || 0)) : 0;
 
-    if (quantity === 0 && raffleQuantity === 0) {
-      showMessage("Cargá al menos una entrada o un número de rifa.", "error");
-      return;
-    }
-    if (quantity > 0 && channel === "anticipada" && ticketEvent.salesOpen === false) {
+    if (channel === "anticipada" && ticketEvent.salesOpen === false) {
       showMessage("La venta anticipada está cerrada. Usá el tipo 'Puerta' si corresponde.", "error");
       return;
     }

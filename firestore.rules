@@ -267,13 +267,14 @@ service cloud.firestore {
       allow update: if isAdmin() || isValidOrderPaymentBump() || isValidRaffleNumbersUpdate();
       allow delete: if false; // los pedidos no se borran, se anulan (status)
 
-      // Un pedido puede ser: entradas, números de rifa, o las dos cosas
-      // (al menos una cantidad tiene que ser > 0). "collaboration" marca
-      // que paga como una entrada normal pero no va a venir -- no cambia
-      // nada acá, solo lo lee la pantalla de emisión para no ofrecer el
-      // botón de generar el QR. Los números de rifa (el talonario físico
-      // real) no se cargan acá: quedan en una lista vacía al crear el
-      // pedido y se anotan después con isValidRaffleNumbersUpdate().
+      // Todo pedido tiene al menos 1 entrada -- la entrada es lo que da
+      // derecho a comprar rifa, no se vende rifa suelta. "collaboration"
+      // marca que paga como una entrada normal pero no va a venir -- no
+      // cambia nada acá, solo lo lee la pantalla de emisión para no
+      // ofrecer el botón de generar el QR. Los números de rifa (el
+      // talonario físico real) no se cargan acá: quedan en una lista
+      // vacía al crear el pedido y se anotan después con
+      // isValidRaffleNumbersUpdate().
       function isValidOrderCreate() {
         let b = request.resource.data;
         let event = get(/databases/$(database)/documents/ticketEvents/$(b.ticketEventId)).data;
@@ -291,9 +292,11 @@ service cloud.firestore {
           ])
           && b.sellerUid == request.auth.uid
           && b.sellerEmail == callerEmail()
-          && b.quantity is int && b.quantity >= 0
+          // La entrada da derecho a comprar rifa -- no se vende rifa
+          // suelta, por eso quantity (entradas) siempre tiene que ser
+          // al menos 1, haya o no números de rifa en el mismo pedido.
+          && b.quantity is int && b.quantity > 0
           && b.raffleQuantity is int && b.raffleQuantity >= 0
-          && (b.quantity > 0 || b.raffleQuantity > 0)
           && (b.channel == 'anticipada' || b.channel == 'puerta')
           && b.unitPrice == expectedPrice
           && b.raffleUnitPrice == rafflePrice

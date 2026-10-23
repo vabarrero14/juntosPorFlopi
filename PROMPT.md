@@ -238,7 +238,8 @@ eventStaff/{email}
 
 orders/{id}           // pedidos
   ticketEventId, buyerName, buyerPhone,
-  quantity,              // cantidad de entradas, puede ser 0 si es solo rifa
+  quantity,              // cantidad de entradas, siempre >= 1 (la entrada da
+                           // derecho a comprar rifa, no se vende rifa suelta)
   channel: "anticipada" | "puerta", unitPrice, total,
   raffleQuantity,        // números de rifa comprados, puede ser 0
   raffleUnitPrice,        // precio por número al momento de la compra

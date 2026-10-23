@@ -54,8 +54,8 @@
           <input id="buyerPhone" name="buyerPhone" required inputmode="tel" />
         </div>
         <div class="form-row">
-          <label for="quantity">Cantidad de entradas</label>
-          <input id="quantity" name="quantity" type="number" min="0" step="1" value="1" />
+          <label for="quantity">Cantidad de entradas *</label>
+          <input id="quantity" name="quantity" type="number" min="1" step="1" value="1" required />
         </div>
         <div class="form-row">
           <label for="channel">Tipo</label>
@@ -67,6 +67,7 @@
         <div class="form-row" id="raffle-field-row" hidden>
           <label for="raffleQuantity">Números de rifa</label>
           <input id="raffleQuantity" name="raffleQuantity" type="number" min="0" step="1" value="0" />
+          <p class="form-help">Solo se puede comprar rifa junto con al menos una entrada.</p>
         </div>
       </div>
 
