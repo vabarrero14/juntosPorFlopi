@@ -1,6 +1,6 @@
 import { requireEventStaff } from "../../js/event-staff-guard.js";
 import { renderEntradasNav } from "../../js/entradas-nav.js";
-import { watchOrder, cancelOrder } from "../../../js/orders-service.js";
+import { watchOrder, cancelOrder, updateRaffleNumbers } from "../../../js/orders-service.js";
 import {
   registerCashPayment,
   registerTransferPayment,
@@ -61,6 +61,17 @@ function buildShell() {
       </form>
     </div>
 
+    <div class="card" id="raffle-card" hidden>
+      <h3 class="mt-0">Rifa</h3>
+      <div class="form-help" id="raffle-info"></div>
+      <div class="form-row">
+        <label for="raffle-numbers-input">Números del talonario entregados</label>
+        <textarea id="raffle-numbers-input" rows="2" placeholder="Ej: 14, 15, 16"></textarea>
+      </div>
+      <div id="raffle-numbers-message" class="form-message" hidden></div>
+      <button type="button" class="btn btn-outline" id="raffle-numbers-btn" style="margin-top: 8px;">Guardar números</button>
+    </div>
+
     <div class="card" id="emit-card" hidden>
       <h3>Emitir entradas</h3>
       <div class="form-help" id="emit-info"></div>
@@ -84,20 +95,60 @@ function buildShell() {
   });
   document.getElementById("payment-form").addEventListener("submit", onSubmitPayment);
   document.getElementById("emit-btn").addEventListener("click", onEmitTicket);
+  document.getElementById("raffle-numbers-btn").addEventListener("click", onSaveRaffleNumbers);
 
   shellBuilt = true;
+}
+
+async function onSaveRaffleNumbers() {
+  const input = document.getElementById("raffle-numbers-input");
+  const msg = document.getElementById("raffle-numbers-message");
+  const btn = document.getElementById("raffle-numbers-btn");
+  const numbers = input.value
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+  btn.disabled = true;
+  try {
+    await updateRaffleNumbers(orderId, numbers);
+    msg.textContent = "Guardado.";
+    msg.className = "form-message success";
+    msg.hidden = false;
+  } catch (error) {
+    console.error("Error guardando los números de rifa:", error);
+    msg.textContent = "No pudimos guardar. Probá de nuevo.";
+    msg.className = "form-message error";
+    msg.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function renderOrderSummary() {
   const o = currentOrder;
   document.getElementById("p-status-badge").className = "badge " + o.status;
   document.getElementById("p-status-badge").textContent = STATUS_LABEL[o.status] || o.status;
-  document.getElementById("p-buyer").textContent = o.buyerName;
+  document.getElementById("p-buyer").textContent = o.buyerName + (o.collaboration ? " (colaboración)" : "");
   const saldo = o.total - o.amountConfirmedTotal;
+  const bits = [];
+  if (o.quantity > 0) bits.push(`${o.quantity} entrada(s) ${o.channel === "puerta" ? "(puerta)" : "(anticipada)"}`);
+  if (o.raffleQuantity > 0) bits.push(`${o.raffleQuantity} número(s) de rifa`);
   document.getElementById("p-summary").innerHTML = `
-    ${esc(o.buyerPhone)} · ${o.quantity} entrada(s) ${o.channel === "puerta" ? "(puerta)" : "(anticipada)"}<br/>
+    ${esc(o.buyerPhone)} · ${bits.join(" · ")}<br/>
     Total ${gs(o.total)} · Pagado ${gs(o.amountConfirmedTotal)} · Saldo ${gs(Math.max(0, saldo))}
+    ${o.collaboration ? "<br/><strong>Colaboración: no va a asistir, no se emite entrada.</strong>" : ""}
   `;
+
+  const raffleCard = document.getElementById("raffle-card");
+  raffleCard.hidden = !(o.raffleQuantity > 0);
+  if (o.raffleQuantity > 0) {
+    document.getElementById("raffle-info").textContent = `Compró ${o.raffleQuantity} número(s) de rifa.`;
+    const raffleInput = document.getElementById("raffle-numbers-input");
+    if (document.activeElement !== raffleInput) {
+      raffleInput.value = (o.raffleNumbers || []).join(", ");
+    }
+  }
 
   const actions = document.getElementById("p-order-actions");
   actions.innerHTML = "";
@@ -186,8 +237,9 @@ function ticketUrl(code) {
 
 function renderTickets() {
   const emitCard = document.getElementById("emit-card");
-  emitCard.hidden = currentOrder.status !== "paid";
-  if (currentOrder.status !== "paid") return;
+  const emitRelevant = currentOrder.status === "paid" && currentOrder.quantity > 0 && !currentOrder.collaboration;
+  emitCard.hidden = !emitRelevant;
+  if (!emitRelevant) return;
 
   const remaining = currentOrder.quantity - currentTickets.length;
   document.getElementById("emit-info").textContent =

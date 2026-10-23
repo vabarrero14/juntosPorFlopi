@@ -32,7 +32,12 @@ function showMessage(text, type) {
 function updatePricePreview() {
   if (!ticketEvent) return;
   const qty = Math.max(1, Number(document.getElementById("quantity").value) || 1);
-  pricePreview.textContent = `${qty} x ${gs(ticketEvent.priceDoor)} = ${gs(qty * ticketEvent.priceDoor)} (precio puerta)`;
+  const raffleQty = ticketEvent.raffleEnabled ? Math.max(0, Math.round(Number(document.getElementById("raffleQuantity").value) || 0)) : 0;
+  const rafflePrice = ticketEvent.rafflePrice || 0;
+  const parts = [`${qty} entrada(s) x ${gs(ticketEvent.priceDoor)}`];
+  if (raffleQty > 0) parts.push(`${raffleQty} número(s) de rifa x ${gs(rafflePrice)}`);
+  const total = qty * ticketEvent.priceDoor + raffleQty * rafflePrice;
+  pricePreview.textContent = `${parts.join(" + ")} = ${gs(total)} (precio puerta)`;
 }
 
 async function init() {
@@ -54,7 +59,9 @@ async function init() {
     capacityWarning.hidden = false;
   }
 
+  document.getElementById("raffle-field-row").hidden = !ticketEvent.raffleEnabled;
   document.getElementById("quantity").addEventListener("input", updatePricePreview);
+  document.getElementById("raffleQuantity").addEventListener("input", updatePricePreview);
   updatePricePreview();
 
   methodSelect.addEventListener("change", () => {
@@ -72,6 +79,9 @@ async function onSubmit(e) {
   const buyerName = document.getElementById("buyerName").value.trim();
   const buyerPhone = document.getElementById("buyerPhone").value.trim();
   const quantity = Math.max(1, Math.round(Number(document.getElementById("quantity").value)));
+  const raffleQuantity = ticketEvent.raffleEnabled
+    ? Math.max(0, Math.round(Number(document.getElementById("raffleQuantity").value) || 0))
+    : 0;
   const method = methodSelect.value;
   const reference = document.getElementById("reference").value.trim();
 
@@ -84,7 +94,7 @@ async function onSubmit(e) {
   submitBtn.textContent = "Procesando…";
 
   try {
-    const total = quantity * ticketEvent.priceDoor;
+    const total = quantity * ticketEvent.priceDoor + raffleQuantity * (ticketEvent.rafflePrice || 0);
     const orderId = await createOrder({
       ticketEventId: FLOPI_FEST_ID,
       buyerName,
@@ -92,6 +102,8 @@ async function onSubmit(e) {
       quantity,
       channel: "puerta",
       unitPrice: ticketEvent.priceDoor,
+      raffleQuantity,
+      raffleUnitPrice: ticketEvent.rafflePrice || 0,
       sellerUid: ctx.user.uid,
       sellerEmail: ctx.user.email,
     });
@@ -122,6 +134,11 @@ async function onSubmit(e) {
               <a class="btn btn-outline" href="${window.location.origin}/entrada.html?c=${t.code}" target="_blank" rel="noopener">Ver entrada</a></div>`
           )
           .join("")}
+        ${
+          raffleQuantity > 0
+            ? `<p class="form-help">También compró ${raffleQuantity} número(s) de rifa — anotá qué números del talonario le diste desde <a href="pedido.html?id=${orderId}">este pedido</a>.</p>`
+            : ""
+        }
       `;
       ticketEvent.issuedCount += quantity;
     } else {

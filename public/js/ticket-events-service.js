@@ -56,6 +56,9 @@ export async function createTicketEvent(id, input) {
     currency: "PYG",
     issuedCount: 0,
     salesOpen: input.salesOpen !== false,
+    raffleEnabled: Boolean(input.raffleEnabled),
+    raffleItemName: input.raffleItemName || null,
+    rafflePrice: input.rafflePrice || 0,
   });
 }
 
@@ -73,5 +76,8 @@ export async function updateTicketEventConfig(id, input) {
     priceDoor: input.priceDoor,
     capacity: input.capacity,
     salesOpen: input.salesOpen,
+    raffleEnabled: Boolean(input.raffleEnabled),
+    raffleItemName: input.raffleItemName || null,
+    rafflePrice: input.rafflePrice || 0,
   });
 }

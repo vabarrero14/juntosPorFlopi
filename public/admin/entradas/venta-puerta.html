@@ -54,8 +54,12 @@
         <input id="buyerPhone" required inputmode="tel" />
       </div>
       <div class="form-row">
-        <label for="quantity">Cantidad *</label>
+        <label for="quantity">Cantidad de entradas *</label>
         <input id="quantity" type="number" min="1" step="1" value="1" required />
+      </div>
+      <div class="form-row" id="raffle-field-row" hidden>
+        <label for="raffleQuantity">Números de rifa (opcional)</label>
+        <input id="raffleQuantity" type="number" min="0" step="1" value="0" />
       </div>
       <div class="form-row">
         <label for="method">Cobro</label>

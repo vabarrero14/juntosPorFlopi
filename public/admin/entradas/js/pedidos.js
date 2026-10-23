@@ -26,20 +26,31 @@ function showMessage(text, type) {
 
 function updatePricePreview() {
   if (!ticketEvent) return;
-  const qty = Math.max(1, Number(form.quantity.value) || 1);
+  const qty = Math.max(0, Math.round(Number(form.quantity.value) || 0));
   const unitPrice = form.channel.value === "puerta" ? ticketEvent.priceDoor : ticketEvent.priceEarly;
-  pricePreview.textContent = `${qty} x ${gs(unitPrice)} = ${gs(qty * unitPrice)}`;
+  const raffleQty = ticketEvent.raffleEnabled ? Math.max(0, Math.round(Number(form.raffleQuantity.value) || 0)) : 0;
+  const rafflePrice = ticketEvent.rafflePrice || 0;
+  const total = qty * unitPrice + raffleQty * rafflePrice;
+
+  const parts = [];
+  if (qty > 0) parts.push(`${qty} entrada(s) x ${gs(unitPrice)}`);
+  if (raffleQty > 0) parts.push(`${raffleQty} número(s) de rifa x ${gs(rafflePrice)}`);
+  pricePreview.textContent = parts.length ? `${parts.join(" + ")} = ${gs(total)}` : "Completá al menos entradas o números de rifa.";
 }
 
 function renderOrderRow(order) {
   const row = document.createElement("div");
   row.className = "entry-row";
+  const bits = [];
+  if (order.quantity > 0) bits.push(`${order.quantity} entrada(s)`);
+  if (order.raffleQuantity > 0) bits.push(`${order.raffleQuantity} número(s) de rifa`);
   row.innerHTML = `
     <div>
       <strong>${order.buyerName}</strong>
       <span class="badge ${order.status}">${STATUS_LABEL[order.status] || order.status}</span>
+      ${order.collaboration ? '<span class="category-tag">Colaboración</span>' : ""}
       <div class="form-help">
-        ${order.quantity} entrada(s) · ${gs(order.total)} · pagado ${gs(order.amountConfirmedTotal)}
+        ${bits.join(" · ")} · ${gs(order.total)} · pagado ${gs(order.amountConfirmedTotal)}
         ${order.channel === "puerta" ? "· puerta" : ""}
       </div>
     </div>
@@ -147,8 +158,11 @@ async function init() {
     capacityWarning.hidden = false;
   }
 
+  document.getElementById("raffle-field-row").hidden = !ticketEvent.raffleEnabled;
+
   form.quantity.addEventListener("input", updatePricePreview);
   form.channel.addEventListener("change", updatePricePreview);
+  form.raffleQuantity.addEventListener("input", updatePricePreview);
   updatePricePreview();
 
   form.addEventListener("submit", async (e) => {
@@ -156,12 +170,18 @@ async function init() {
     messageEl.hidden = true;
 
     const channel = form.channel.value;
-    if (channel === "anticipada" && ticketEvent.salesOpen === false) {
+    const quantity = Math.max(0, Math.round(Number(form.quantity.value) || 0));
+    const raffleQuantity = ticketEvent.raffleEnabled ? Math.max(0, Math.round(Number(form.raffleQuantity.value) || 0)) : 0;
+
+    if (quantity === 0 && raffleQuantity === 0) {
+      showMessage("Cargá al menos una entrada o un número de rifa.", "error");
+      return;
+    }
+    if (quantity > 0 && channel === "anticipada" && ticketEvent.salesOpen === false) {
       showMessage("La venta anticipada está cerrada. Usá el tipo 'Puerta' si corresponde.", "error");
       return;
     }
 
-    const quantity = Math.max(1, Math.round(Number(form.quantity.value)));
     const unitPrice = channel === "puerta" ? ticketEvent.priceDoor : ticketEvent.priceEarly;
 
     submitBtn.disabled = true;
@@ -175,6 +195,9 @@ async function init() {
         quantity,
         channel,
         unitPrice,
+        raffleQuantity,
+        raffleUnitPrice: ticketEvent.rafflePrice || 0,
+        collaboration: form.collaboration.checked,
         sellerUid: ctx.user.uid,
         sellerEmail: ctx.user.email,
       });

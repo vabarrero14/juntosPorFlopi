@@ -47,6 +47,11 @@ function render() {
   const checkedInCount = validTickets.filter((t) => t.status === "checked_in").length;
   const pendingEntryCount = validTickets.filter((t) => t.status === "issued").length;
 
+  const paidOrders = orders.filter((o) => o.status === "paid");
+  const raffleSold = paidOrders.reduce((sum, o) => sum + (o.raffleQuantity || 0), 0);
+  const raffleRecaudado = paidOrders.reduce((sum, o) => sum + (o.raffleQuantity || 0) * (o.raffleUnitPrice || 0), 0);
+  const collaborationCount = orders.filter((o) => o.collaboration && o.status !== "cancelled").length;
+
   root.innerHTML = `
     <div class="cards-grid">
       <div class="card">
@@ -62,6 +67,11 @@ function render() {
         <h3 class="mt-0">Ingresaron</h3>
         <p style="font-size: 1.6rem; font-weight: 700;" class="mb-0">${checkedInCount} / ${validTickets.length}</p>
         <p class="form-help mb-0">${pendingEntryCount} todavía no entraron</p>
+      </div>
+      <div class="card">
+        <h3 class="mt-0">Rifa</h3>
+        <p style="font-size: 1.6rem; font-weight: 700;" class="mb-0">${raffleSold} número(s)</p>
+        <p class="form-help mb-0">${gs(raffleRecaudado)} recaudado · ${collaborationCount} colaboración(es)</p>
       </div>
     </div>
 
@@ -152,8 +162,11 @@ function setupExports() {
     const csv = toCsv(orders, [
       { label: "Comprador", value: (o) => o.buyerName },
       { label: "Celular", value: (o) => o.buyerPhone },
-      { label: "Cantidad", value: (o) => o.quantity },
+      { label: "Cantidad entradas", value: (o) => o.quantity },
       { label: "Canal", value: (o) => o.channel },
+      { label: "Números de rifa", value: (o) => o.raffleQuantity || 0 },
+      { label: "Rifa entregados", value: (o) => (o.raffleNumbers || []).join(" ") },
+      { label: "Colaboración", value: (o) => (o.collaboration ? "sí" : "no") },
       { label: "Total", value: (o) => o.total },
       { label: "Pagado", value: (o) => o.amountConfirmedTotal },
       { label: "Estado", value: (o) => o.status },

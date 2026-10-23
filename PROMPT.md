@@ -229,14 +229,23 @@ ticketEvents/{id}
   priceEarly, priceDoor, capacity, currency: "PYG",
   issuedCount,     // contador cacheado, solo se mueve con aritmética exacta
                     // validada en Rules (o libre para un admin)
-  salesOpen: boolean
+  salesOpen: boolean,
+  raffleEnabled: boolean, raffleItemName, rafflePrice  // rifa (sin sorteo digital,
+                    // solo para registrar precio/nombre del premio)
 
 eventStaff/{email}
   email, role: "vendedor" | "puerta", active, createdAt
 
 orders/{id}           // pedidos
-  ticketEventId, buyerName, buyerPhone, quantity,
+  ticketEventId, buyerName, buyerPhone,
+  quantity,              // cantidad de entradas, puede ser 0 si es solo rifa
   channel: "anticipada" | "puerta", unitPrice, total,
+  raffleQuantity,        // números de rifa comprados, puede ser 0
+  raffleUnitPrice,        // precio por número al momento de la compra
+  raffleNumbers: string[], // números del talonario físico entregados (se cargan
+                           // después de crear el pedido, no hay sorteo digital)
+  collaboration: boolean, // paga como una entrada pero no va a venir -> no se
+                           // ofrece emitir QR para esas entradas
   sellerUid, sellerEmail, status: "reserved"|"partial"|"paid"|"cancelled",
   amountConfirmedTotal, appliedPaymentIds: string[],  // ver nota abajo
   notes, createdAt

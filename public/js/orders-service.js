@@ -22,10 +22,25 @@ function toOrderObject(docSnap) {
   };
 }
 
-export async function createOrder({ ticketEventId, buyerName, buyerPhone, quantity, channel, unitPrice, sellerUid, sellerEmail, notes }) {
+export async function createOrder({
+  ticketEventId,
+  buyerName,
+  buyerPhone,
+  quantity,
+  channel,
+  unitPrice,
+  raffleQuantity,
+  raffleUnitPrice,
+  collaboration,
+  sellerUid,
+  sellerEmail,
+  notes,
+}) {
   const { db, collection, doc, setDoc, serverTimestamp } = await loadFirestore();
   const ref = doc(collection(db, "orders"));
-  const total = quantity * unitPrice;
+  const raffleQty = raffleQuantity || 0;
+  const raffleUnit = raffleUnitPrice || 0;
+  const total = quantity * unitPrice + raffleQty * raffleUnit;
   await setDoc(ref, {
     ticketEventId,
     buyerName,
@@ -33,6 +48,10 @@ export async function createOrder({ ticketEventId, buyerName, buyerPhone, quanti
     quantity,
     channel,
     unitPrice,
+    raffleQuantity: raffleQty,
+    raffleUnitPrice: raffleUnit,
+    raffleNumbers: [],
+    collaboration: Boolean(collaboration),
     total,
     sellerUid,
     sellerEmail,
@@ -83,6 +102,14 @@ export async function fetchAllOrders(ticketEventId) {
 export async function cancelOrder(id) {
   const { db, doc, updateDoc } = await loadFirestore();
   return updateDoc(doc(db, "orders", id), { status: "cancelled" });
+}
+
+// Anota qué número(s) del talonario físico de rifa se le entregaron a
+// quien compró. No mueve plata -- cualquiera del staff lo puede editar
+// las veces que haga falta (se van entregando de a poco).
+export async function updateRaffleNumbers(id, raffleNumbers) {
+  const { db, doc, updateDoc } = await loadFirestore();
+  return updateDoc(doc(db, "orders", id), { raffleNumbers });
 }
 
 // "Aplica" un pago ya confirmado al pedido: suma su monto a

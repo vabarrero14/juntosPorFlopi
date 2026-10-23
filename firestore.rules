@@ -264,28 +264,55 @@ service cloud.firestore {
       allow read: if isAdmin() || (isEventStaff() && resource.data.sellerUid == request.auth.uid);
 
       allow create: if isEventStaff() && isValidOrderCreate();
-      allow update: if isAdmin() || isValidOrderPaymentBump();
+      allow update: if isAdmin() || isValidOrderPaymentBump() || isValidRaffleNumbersUpdate();
       allow delete: if false; // los pedidos no se borran, se anulan (status)
 
+      // Un pedido puede ser: entradas, números de rifa, o las dos cosas
+      // (al menos una cantidad tiene que ser > 0). "collaboration" marca
+      // que paga como una entrada normal pero no va a venir -- no cambia
+      // nada acá, solo lo lee la pantalla de emisión para no ofrecer el
+      // botón de generar el QR. Los números de rifa (el talonario físico
+      // real) no se cargan acá: quedan en una lista vacía al crear el
+      // pedido y se anotan después con isValidRaffleNumbersUpdate().
       function isValidOrderCreate() {
         let b = request.resource.data;
         let event = get(/databases/$(database)/documents/ticketEvents/$(b.ticketEventId)).data;
         let expectedPrice = b.channel == 'puerta' ? event.priceDoor : event.priceEarly;
+        // .get(key, default) porque "rafflePrice" es un campo agregado
+        // después -- un ticketEvents creado antes de esta función no lo
+        // tiene, y leerlo con ".rafflePrice" a secas revienta la regla
+        // entera (mismo motivo que callerEmail() más arriba).
+        let rafflePrice = event.get('rafflePrice', 0);
         return b.keys().hasAll([
             'ticketEventId', 'buyerName', 'buyerPhone', 'quantity', 'channel',
-            'unitPrice', 'total', 'sellerUid', 'sellerEmail', 'status',
+            'unitPrice', 'raffleQuantity', 'raffleUnitPrice', 'raffleNumbers',
+            'collaboration', 'total', 'sellerUid', 'sellerEmail', 'status',
             'amountConfirmedTotal', 'appliedPaymentIds', 'createdAt'
           ])
           && b.sellerUid == request.auth.uid
           && b.sellerEmail == callerEmail()
-          && b.quantity is int && b.quantity > 0
+          && b.quantity is int && b.quantity >= 0
+          && b.raffleQuantity is int && b.raffleQuantity >= 0
+          && (b.quantity > 0 || b.raffleQuantity > 0)
           && (b.channel == 'anticipada' || b.channel == 'puerta')
           && b.unitPrice == expectedPrice
-          && b.total == b.quantity * b.unitPrice
+          && b.raffleUnitPrice == rafflePrice
+          && b.raffleNumbers.size() == 0
+          && b.collaboration is bool
+          && b.total == b.quantity * b.unitPrice + b.raffleQuantity * b.raffleUnitPrice
           && b.status == 'reserved'
           && b.amountConfirmedTotal == 0
           && b.appliedPaymentIds.size() == 0
           && b.createdAt == request.time;
+      }
+
+      // Anotar qué número(s) del talonario físico se le entregaron a
+      // quien compró rifa. No mueve plata, así que cualquiera del staff
+      // lo puede editar (no hace falta que sea quien vendió), las veces
+      // que haga falta (se van entregando de a poco).
+      function isValidRaffleNumbersUpdate() {
+        let changed = request.resource.data.diff(resource.data).affectedKeys();
+        return isEventStaff() && changed.hasOnly(['raffleNumbers']);
       }
 
       function isValidOrderPaymentBump() {

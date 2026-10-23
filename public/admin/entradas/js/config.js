@@ -43,6 +43,9 @@ async function prefill() {
   form.priceDoor.value = existing.priceDoor ?? "";
   form.capacity.value = existing.capacity ?? "";
   form.salesOpen.checked = existing.salesOpen !== false;
+  form.raffleEnabled.checked = Boolean(existing.raffleEnabled);
+  form.raffleItemName.value = existing.raffleItemName || "";
+  form.rafflePrice.value = existing.rafflePrice || "";
 
   if (typeof existing.issuedCount === "number") {
     issuedCountInfo.textContent = `Ya se emitieron ${existing.issuedCount} de ${existing.capacity} entradas. La capacidad no se puede bajar por debajo de ese número.`;
@@ -84,6 +87,9 @@ async function init() {
       priceDoor: Number(formData.get("priceDoor")),
       capacity,
       salesOpen: form.salesOpen.checked,
+      raffleEnabled: form.raffleEnabled.checked,
+      raffleItemName: formData.get("raffleItemName").trim(),
+      rafflePrice: Number(formData.get("rafflePrice")) || 0,
     };
 
     submitBtn.disabled = true;
