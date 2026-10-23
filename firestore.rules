@@ -264,7 +264,7 @@ service cloud.firestore {
       allow read: if isAdmin() || (isEventStaff() && resource.data.sellerUid == request.auth.uid);
 
       allow create: if isEventStaff() && isValidOrderCreate();
-      allow update: if isAdmin() || isValidOrderPaymentBump() || isValidRaffleNumbersUpdate();
+      allow update: if isAdmin() || isValidOrderPaymentBump() || isValidRaffleNumbersUpdate() || isValidAddRaffle();
       allow delete: if false; // los pedidos no se borran, se anulan (status)
 
       // Todo pedido tiene al menos 1 entrada -- la entrada es lo que da
@@ -316,6 +316,31 @@ service cloud.firestore {
       function isValidRaffleNumbersUpdate() {
         let changed = request.resource.data.diff(resource.data).affectedKeys();
         return isEventStaff() && changed.hasOnly(['raffleNumbers']);
+      }
+
+      // Sumar rifa a un pedido que ya existía (incluso pedidos cargados
+      // antes de que la rifa existiera como opción, que no tienen el
+      // campo raffleQuantity todavía -- por eso .get(key, 0)). Si el
+      // pedido ya estaba "paid", el total nuevo puede dejarlo "partial"
+      // de nuevo hasta que se cobre la diferencia -- eso no borra
+      // ninguna entrada que ya se haya emitido.
+      function isValidAddRaffle() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        let event = get(/databases/$(database)/documents/ticketEvents/$(before.ticketEventId)).data;
+        let rafflePrice = event.get('rafflePrice', 0);
+        let beforeRaffleQty = before.get('raffleQuantity', 0);
+        let addedQty = after.raffleQuantity - beforeRaffleQty;
+        let confirmed = before.get('amountConfirmedTotal', 0);
+        let newTotal = before.total + addedQty * rafflePrice;
+        return isEventStaff()
+          && before.status != 'cancelled'
+          && changed.hasOnly(['raffleQuantity', 'raffleUnitPrice', 'total', 'status'])
+          && addedQty is int && addedQty > 0
+          && after.raffleUnitPrice == rafflePrice
+          && after.total == newTotal
+          && after.status == (confirmed >= newTotal ? 'paid' : (confirmed > 0 ? 'partial' : 'reserved'));
       }
 
       function isValidOrderPaymentBump() {

@@ -288,7 +288,11 @@ admin tiene vía libre para tocar el pedido sin esta coreografía).
   admin; `issuedCount` solo se mueve de a 1 con la aritmética validada.
 - `orders`/`payments`: el staff crea y lee solo lo propio
   (`sellerUid`/`receivedByUid` == su uid); un admin ve y edita todo. Anular
-  pedido/pago y confirmar transferencias es admin-only.
+  pedido/pago y confirmar transferencias es admin-only. Cualquiera del staff
+  puede sumarle rifa a un pedido ya existente (incluso uno cargado antes de
+  que la rifa existiera) o anotar los números del talonario entregados --
+  si el total nuevo supera lo ya cobrado, el pedido vuelve a "partial" sin
+  invalidar entradas ya emitidas.
 - `tickets`: lectura amplia para cualquiera del staff (necesitan buscar por
   nombre/celular/código corto); lectura pública solo por `get` puntual con el
   código largo exacto (nunca `list`), así nadie enumera entradas ajenas. El

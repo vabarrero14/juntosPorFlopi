@@ -1,6 +1,7 @@
 import { requireEventStaff } from "../../js/event-staff-guard.js";
 import { renderEntradasNav } from "../../js/entradas-nav.js";
-import { watchOrder, cancelOrder, updateRaffleNumbers } from "../../../js/orders-service.js";
+import { watchOrder, cancelOrder, updateRaffleNumbers, addRaffleToOrder } from "../../../js/orders-service.js";
+import { getTicketEvent } from "../../../js/ticket-events-service.js";
 import {
   registerCashPayment,
   registerTransferPayment,
@@ -25,6 +26,7 @@ let currentOrder = null;
 let currentPayments = [];
 let currentTickets = [];
 let shellBuilt = false;
+let ticketEvent = null;
 
 function buildShell() {
   root.innerHTML = `
@@ -64,12 +66,24 @@ function buildShell() {
     <div class="card" id="raffle-card" hidden>
       <h3 class="mt-0">Rifa</h3>
       <div class="form-help" id="raffle-info"></div>
-      <div class="form-row">
-        <label for="raffle-numbers-input">Números del talonario entregados</label>
-        <textarea id="raffle-numbers-input" rows="2" placeholder="Ej: 14, 15, 16"></textarea>
+
+      <div id="raffle-numbers-section" hidden>
+        <div class="form-row">
+          <label for="raffle-numbers-input">Números del talonario entregados</label>
+          <textarea id="raffle-numbers-input" rows="2" placeholder="Ej: 14, 15, 16"></textarea>
+        </div>
+        <div id="raffle-numbers-message" class="form-message" hidden></div>
+        <button type="button" class="btn btn-outline" id="raffle-numbers-btn" style="margin-top: 8px;">Guardar números</button>
       </div>
-      <div id="raffle-numbers-message" class="form-message" hidden></div>
-      <button type="button" class="btn btn-outline" id="raffle-numbers-btn" style="margin-top: 8px;">Guardar números</button>
+
+      <div class="form-row-group" style="margin-top: 16px; align-items: flex-end;">
+        <div class="form-row">
+          <label for="add-raffle-input">Agregar números de rifa</label>
+          <input id="add-raffle-input" type="number" min="1" step="1" value="1" />
+        </div>
+        <button type="button" class="btn btn-primary" id="add-raffle-btn">Agregar</button>
+      </div>
+      <div id="add-raffle-message" class="form-message" hidden></div>
     </div>
 
     <div class="card" id="emit-card" hidden>
@@ -96,8 +110,40 @@ function buildShell() {
   document.getElementById("payment-form").addEventListener("submit", onSubmitPayment);
   document.getElementById("emit-btn").addEventListener("click", onEmitTicket);
   document.getElementById("raffle-numbers-btn").addEventListener("click", onSaveRaffleNumbers);
+  document.getElementById("add-raffle-btn").addEventListener("click", onAddRaffle);
 
   shellBuilt = true;
+}
+
+async function onAddRaffle() {
+  const input = document.getElementById("add-raffle-input");
+  const msg = document.getElementById("add-raffle-message");
+  const btn = document.getElementById("add-raffle-btn");
+  const additionalQuantity = Math.round(Number(input.value));
+
+  msg.hidden = true;
+  if (!additionalQuantity || additionalQuantity <= 0) {
+    msg.textContent = "Ingresá una cantidad válida.";
+    msg.className = "form-message error";
+    msg.hidden = false;
+    return;
+  }
+
+  btn.disabled = true;
+  try {
+    await addRaffleToOrder(orderId, additionalQuantity);
+    input.value = 1;
+    msg.textContent = "Agregado. Revisá el saldo pendiente en Pagos.";
+    msg.className = "form-message success";
+    msg.hidden = false;
+  } catch (error) {
+    console.error("Error agregando rifa al pedido:", error);
+    msg.textContent = "No pudimos agregar la rifa. Probá de nuevo.";
+    msg.className = "form-message error";
+    msg.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function onSaveRaffleNumbers() {
@@ -141,9 +187,18 @@ function renderOrderSummary() {
   `;
 
   const raffleCard = document.getElementById("raffle-card");
-  raffleCard.hidden = !(o.raffleQuantity > 0);
-  if (o.raffleQuantity > 0) {
-    document.getElementById("raffle-info").textContent = `Compró ${o.raffleQuantity} número(s) de rifa.`;
+  const raffleNumbersSection = document.getElementById("raffle-numbers-section");
+  const hasRaffle = o.raffleQuantity > 0;
+  // Siempre visible si el evento vende rifa (para poder agregar, aunque
+  // este pedido todavía no tenga ninguna -- incluye pedidos viejos
+  // cargados antes de que la rifa existiera como opción); si no vende
+  // rifa, directamente no tiene sentido mostrar nada de esto.
+  raffleCard.hidden = !(ticketEvent && ticketEvent.raffleEnabled);
+  raffleNumbersSection.hidden = !hasRaffle;
+  document.getElementById("raffle-info").textContent = hasRaffle
+    ? `Compró ${o.raffleQuantity} número(s) de rifa.`
+    : "Todavía no compró números de rifa.";
+  if (hasRaffle) {
     const raffleInput = document.getElementById("raffle-numbers-input");
     if (document.activeElement !== raffleInput) {
       raffleInput.value = (o.raffleNumbers || []).join(", ");
@@ -379,6 +434,9 @@ async function init() {
       }
       const isFirstLoad = !shellBuilt;
       currentOrder = order;
+      if (isFirstLoad) {
+        ticketEvent = await getTicketEvent(order.ticketEventId).catch(() => null);
+      }
       if (!shellBuilt) buildShell();
       renderOrderSummary();
       renderTickets();

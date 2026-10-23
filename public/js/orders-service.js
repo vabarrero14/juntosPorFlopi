@@ -104,6 +104,40 @@ export async function cancelOrder(id) {
   return updateDoc(doc(db, "orders", id), { status: "cancelled" });
 }
 
+// Suma números de rifa a un pedido que ya existía (puede ser uno
+// cargado antes de que la rifa fuera una opción, o uno que ya está
+// pagado). Si el total nuevo supera lo ya confirmado, el pedido vuelve
+// a quedar "partial" hasta que se registre el pago de la diferencia --
+// eso no invalida ninguna entrada que ya se haya emitido.
+export async function addRaffleToOrder(orderId, additionalQuantity) {
+  const { db, doc, runTransaction } = await loadFirestore();
+  return runTransaction(db, async (tx) => {
+    const orderRef = doc(db, "orders", orderId);
+    const orderSnap = await tx.get(orderRef);
+    if (!orderSnap.exists()) throw new Error("El pedido no existe.");
+    const order = orderSnap.data();
+
+    const eventRef = doc(db, "ticketEvents", order.ticketEventId);
+    const eventSnap = await tx.get(eventRef);
+    if (!eventSnap.exists()) throw new Error("El evento no existe.");
+    const rafflePrice = eventSnap.data().rafflePrice || 0;
+
+    const newRaffleQuantity = (order.raffleQuantity || 0) + additionalQuantity;
+    const newTotal = order.total + additionalQuantity * rafflePrice;
+    const confirmed = order.amountConfirmedTotal || 0;
+    const newStatus = confirmed >= newTotal ? "paid" : confirmed > 0 ? "partial" : "reserved";
+
+    const update = {
+      raffleQuantity: newRaffleQuantity,
+      raffleUnitPrice: rafflePrice,
+      total: newTotal,
+      status: newStatus,
+    };
+    tx.update(orderRef, update);
+    return { ...order, ...update, id: orderId };
+  });
+}
+
 // Anota qué número(s) del talonario físico de rifa se le entregaron a
 // quien compró. No mueve plata -- cualquiera del staff lo puede editar
 // las veces que haga falta (se van entregando de a poco).
