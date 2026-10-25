@@ -290,9 +290,13 @@ admin tiene vía libre para tocar el pedido sin esta coreografía).
   (`sellerUid`/`receivedByUid` == su uid); un admin ve y edita todo. Anular
   pedido/pago y confirmar transferencias es admin-only. Cualquiera del staff
   puede sumarle rifa a un pedido ya existente (incluso uno cargado antes de
-  que la rifa existiera) o anotar los números del talonario entregados --
-  si el total nuevo supera lo ya cobrado, el pedido vuelve a "partial" sin
-  invalidar entradas ya emitidas. Un admin también puede borrar un pedido
+  que la rifa existiera) o sacársela por completo si se cargó por error
+  (`isValidAddRaffle`/`isValidRemoveRaffle`) -- ambas recalculan el total y
+  el status, sin invalidar entradas ya emitidas. "Sacar rifa" se puede usar
+  en cualquier momento (pago completo o no), a diferencia de anotar los
+  números del talonario entregados, que -- igual que emitir la entrada --
+  recién se habilita cuando el pedido queda "paid" (el papel se entrega
+  junto con la entrada, no antes). Un admin también puede borrar un pedido
   definitivamente (no solo cancelarlo): el cliente
   (`orders-service.js:deleteOrderCascade`) borra en una sola transacción el
   pedido, sus entradas (liberando el cupo de las que no estaban ya anuladas)

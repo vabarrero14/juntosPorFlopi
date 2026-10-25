@@ -1,6 +1,6 @@
 import { requireEventStaff } from "../../js/event-staff-guard.js";
 import { renderEntradasNav } from "../../js/entradas-nav.js";
-import { watchOrder, cancelOrder, updateRaffleNumbers, addRaffleToOrder, deleteOrderCascade } from "../../../js/orders-service.js";
+import { watchOrder, cancelOrder, updateRaffleNumbers, addRaffleToOrder, removeRaffleFromOrder, deleteOrderCascade } from "../../../js/orders-service.js";
 import { getTicketEvent } from "../../../js/ticket-events-service.js";
 import {
   registerCashPayment,
@@ -67,6 +67,10 @@ function buildShell() {
       <h3 class="mt-0">Rifa</h3>
       <div class="form-help" id="raffle-info"></div>
 
+      <div id="raffle-remove-section" hidden style="margin-top: 8px;">
+        <button type="button" class="btn btn-outline" id="remove-raffle-btn">Quitar rifa de este pedido</button>
+      </div>
+
       <div id="raffle-numbers-section" hidden>
         <div class="form-row">
           <label for="raffle-numbers-input">Números del talonario entregados</label>
@@ -111,6 +115,7 @@ function buildShell() {
   document.getElementById("emit-btn").addEventListener("click", onEmitTicket);
   document.getElementById("raffle-numbers-btn").addEventListener("click", onSaveRaffleNumbers);
   document.getElementById("add-raffle-btn").addEventListener("click", onAddRaffle);
+  document.getElementById("remove-raffle-btn").addEventListener("click", onRemoveRaffle);
 
   shellBuilt = true;
 }
@@ -166,6 +171,23 @@ async function onAddRaffle() {
   }
 }
 
+// Sacar toda la rifa de un pedido (ej. se agregó por error). Vuelve
+// raffleQuantity a 0, borra los números anotados y descuenta del total
+// lo que esa rifa sumaba -- no toca las entradas ni los pagos.
+async function onRemoveRaffle() {
+  const o = currentOrder;
+  const monto = (o.raffleQuantity || 0) * (o.raffleUnitPrice || 0);
+  if (!window.confirm(`¿Quitar los ${o.raffleQuantity} número(s) de rifa de este pedido? El total baja ${gs(monto)}. No se puede deshacer.`)) {
+    return;
+  }
+  try {
+    await removeRaffleFromOrder(orderId);
+  } catch (error) {
+    console.error("Error quitando la rifa del pedido:", error);
+    window.alert("No pudimos quitar la rifa.");
+  }
+}
+
 async function onSaveRaffleNumbers() {
   const input = document.getElementById("raffle-numbers-input");
   const msg = document.getElementById("raffle-numbers-message");
@@ -207,18 +229,28 @@ function renderOrderSummary() {
   `;
 
   const raffleCard = document.getElementById("raffle-card");
+  const raffleRemoveSection = document.getElementById("raffle-remove-section");
   const raffleNumbersSection = document.getElementById("raffle-numbers-section");
   const hasRaffle = o.raffleQuantity > 0;
-  // Siempre visible si el evento vende rifa (para poder agregar, aunque
-  // este pedido todavía no tenga ninguna -- incluye pedidos viejos
-  // cargados antes de que la rifa existiera como opción); si no vende
+  // Igual que emitir la entrada: hasta que el pedido no esté 100% pagado,
+  // no se anotan los números del talonario entregados (el papel físico se
+  // entrega junto con la entrada, no antes). "Quitar rifa" es aparte --
+  // corrige un error de carga, así que tiene que poder usarse en
+  // cualquier momento, pago completo o no.
+  const raffleReady = hasRaffle && o.status === "paid";
+  // La tarjeta siempre está visible si el evento vende rifa (para poder
+  // agregar, aunque este pedido todavía no tenga ninguna -- incluye
+  // pedidos viejos cargados antes de que la rifa existiera); si no vende
   // rifa, directamente no tiene sentido mostrar nada de esto.
   raffleCard.hidden = !(ticketEvent && ticketEvent.raffleEnabled);
-  raffleNumbersSection.hidden = !hasRaffle;
-  document.getElementById("raffle-info").textContent = hasRaffle
-    ? `Compró ${o.raffleQuantity} número(s) de rifa.`
-    : "Todavía no compró números de rifa.";
-  if (hasRaffle) {
+  raffleRemoveSection.hidden = !hasRaffle;
+  raffleNumbersSection.hidden = !raffleReady;
+  document.getElementById("raffle-info").textContent = !hasRaffle
+    ? "Todavía no compró números de rifa."
+    : raffleReady
+      ? `Compró ${o.raffleQuantity} número(s) de rifa. Anotados ${(o.raffleNumbers || []).length} de ${o.raffleQuantity}.`
+      : `Compró ${o.raffleQuantity} número(s) de rifa. Vas a poder anotar los números del talonario entregados cuando el pedido esté pagado.`;
+  if (raffleReady) {
     const raffleInput = document.getElementById("raffle-numbers-input");
     if (document.activeElement !== raffleInput) {
       raffleInput.value = (o.raffleNumbers || []).join(", ");

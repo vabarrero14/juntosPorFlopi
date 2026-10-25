@@ -178,6 +178,35 @@ export async function addRaffleToOrder(orderId, additionalQuantity) {
   });
 }
 
+// Sacar toda la rifa de un pedido (ej. se cargó por error). Vuelve
+// raffleQuantity a 0, borra los números anotados y descuenta del total
+// lo que esa rifa sumaba, recalculando el status. No se puede sacar
+// "una parte" -- es todo o nada (ver isValidRemoveRaffle en las reglas).
+export async function removeRaffleFromOrder(orderId) {
+  const { db, doc, runTransaction } = await loadFirestore();
+  return runTransaction(db, async (tx) => {
+    const orderRef = doc(db, "orders", orderId);
+    const orderSnap = await tx.get(orderRef);
+    if (!orderSnap.exists()) throw new Error("El pedido no existe.");
+    const order = orderSnap.data();
+
+    const raffleQty = order.raffleQuantity || 0;
+    const raffleUnit = order.raffleUnitPrice || 0;
+    const newTotal = order.total - raffleQty * raffleUnit;
+    const confirmed = order.amountConfirmedTotal || 0;
+    const newStatus = confirmed >= newTotal ? "paid" : confirmed > 0 ? "partial" : "reserved";
+
+    const update = {
+      raffleQuantity: 0,
+      raffleNumbers: [],
+      total: newTotal,
+      status: newStatus,
+    };
+    tx.update(orderRef, update);
+    return { ...order, ...update, id: orderId };
+  });
+}
+
 // Anota qué número(s) del talonario físico de rifa se le entregaron a
 // quien compró. No mueve plata -- cualquiera del staff lo puede editar
 // las veces que haga falta (se van entregando de a poco).

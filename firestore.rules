@@ -264,7 +264,7 @@ service cloud.firestore {
       allow read: if isAdmin() || (isEventStaff() && resource.data.sellerUid == request.auth.uid);
 
       allow create: if isEventStaff() && isValidOrderCreate();
-      allow update: if isAdmin() || isValidOrderPaymentBump() || isValidRaffleNumbersUpdate() || isValidAddRaffle();
+      allow update: if isAdmin() || isValidOrderPaymentBump() || isValidRaffleNumbersUpdate() || isValidAddRaffle() || isValidRemoveRaffle();
       // Lo normal es anular (status), no borrar. Pero el admin puede borrar
       // un pedido definitivamente (ej. uno cargado por error) -- el cliente
       // (orders-service.js:deleteOrderCascade) se encarga de borrar también
@@ -344,6 +344,28 @@ service cloud.firestore {
           && changed.hasOnly(['raffleQuantity', 'raffleUnitPrice', 'total', 'status'])
           && addedQty is int && addedQty > 0
           && after.raffleUnitPrice == rafflePrice
+          && after.total == newTotal
+          && after.status == (confirmed >= newTotal ? 'paid' : (confirmed > 0 ? 'partial' : 'reserved'));
+      }
+
+      // Sacar toda la rifa de un pedido (por error al cargarla). Vuelve
+      // raffleQuantity a 0, borra los números anotados y descuenta del
+      // total lo que esa rifa sumaba -- igual que isValidAddRaffle() pero
+      // al revés. No se puede hacer un "sacar parcial"; es todo o nada.
+      function isValidRemoveRaffle() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        let beforeRaffleQty = before.get('raffleQuantity', 0);
+        let beforeRaffleUnit = before.get('raffleUnitPrice', 0);
+        let confirmed = before.get('amountConfirmedTotal', 0);
+        let newTotal = before.total - beforeRaffleQty * beforeRaffleUnit;
+        return isEventStaff()
+          && before.status != 'cancelled'
+          && beforeRaffleQty > 0
+          && changed.hasOnly(['raffleQuantity', 'raffleNumbers', 'total', 'status'])
+          && after.raffleQuantity == 0
+          && after.raffleNumbers.size() == 0
           && after.total == newTotal
           && after.status == (confirmed >= newTotal ? 'paid' : (confirmed > 0 ? 'partial' : 'reserved'));
       }
