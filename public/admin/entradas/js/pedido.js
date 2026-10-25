@@ -9,7 +9,7 @@ import {
   voidPayment,
   fetchPaymentsForOrder,
 } from "../../../js/payments-service.js";
-import { issueTicket, fetchTicketsByOrder } from "../../../js/tickets-service.js";
+import { issueTicket, fetchTicketsByOrder, updateTicketHolder, deleteTicket } from "../../../js/tickets-service.js";
 
 const STATUS_LABEL = { reserved: "Reservado", partial: "Parcial", paid: "Pagado", cancelled: "Cancelado" };
 const PAYMENT_STATUS_LABEL = { pending_confirm: "Por confirmar", confirmed: "Confirmado", voided: "Anulado" };
@@ -327,15 +327,65 @@ function renderTickets() {
         <div class="ticket-code">${t.shortCode}</div>
       </div>
     `;
+    const actionsBox = document.createElement("div");
+    actionsBox.className = "admin-row-actions";
+
     const link = document.createElement("a");
     link.href = ticketUrl(t.id);
     link.target = "_blank";
     link.rel = "noopener";
     link.className = "btn btn-outline";
     link.textContent = "Ver entrada";
-    row.appendChild(link);
+    actionsBox.appendChild(link);
+
+    if (ctx.isAdmin) {
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-outline";
+      editBtn.textContent = "Editar";
+      editBtn.addEventListener("click", () => onEditTicket(t));
+      actionsBox.appendChild(editBtn);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn btn-outline";
+      deleteBtn.textContent = "Eliminar";
+      deleteBtn.addEventListener("click", () => onDeleteTicket(t));
+      actionsBox.appendChild(deleteBtn);
+    }
+
+    row.appendChild(actionsBox);
     list.appendChild(row);
   });
+}
+
+// Admin: corrige nombre/teléfono de una entrada ya emitida.
+async function onEditTicket(ticket) {
+  const holderName = window.prompt("Nombre en la entrada:", ticket.holderName);
+  if (holderName === null) return;
+  const holderPhone = window.prompt("Celular:", ticket.holderPhone || "");
+  if (holderPhone === null) return;
+  if (!holderName.trim()) {
+    window.alert("El nombre no puede quedar vacío.");
+    return;
+  }
+  try {
+    await updateTicketHolder(ticket.id, { holderName: holderName.trim(), holderPhone: holderPhone.trim() });
+    await refreshTickets();
+  } catch (error) {
+    console.error("Error editando la entrada:", error);
+    window.alert("No pudimos editar la entrada.");
+  }
+}
+
+// Admin: borra una entrada ya emitida y libera el cupo si correspondía.
+async function onDeleteTicket(ticket) {
+  if (!window.confirm(`¿Eliminar la entrada de ${ticket.holderName}? No se puede deshacer.`)) return;
+  try {
+    await deleteTicket(ticket.id);
+    await refreshTickets();
+  } catch (error) {
+    console.error("Error eliminando la entrada:", error);
+    window.alert("No pudimos eliminar la entrada.");
+  }
 }
 
 async function refreshPayments() {

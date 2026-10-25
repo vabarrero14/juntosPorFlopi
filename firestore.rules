@@ -423,7 +423,11 @@ service cloud.firestore {
 
       allow create: if isEventStaff() && isValidTicketCreate();
       allow update: if isAdmin() || isValidCheckIn() || isValidReentry();
-      allow delete: if false;
+      // Solo el admin puede borrar una entrada ya emitida (p.ej. error de
+      // tipeo grave, duplicado). El admin también puede editar cualquier
+      // campo via el "allow update" de arriba -- no hace falta una función
+      // de validación aparte porque isAdmin() ya la cubre sin reservas.
+      allow delete: if isAdmin();
 
       function isValidTicketCreate() {
         let b = request.resource.data;

@@ -299,7 +299,12 @@ admin tiene vía libre para tocar el pedido sin esta coreografía).
   check-in (`issued` → `checked_in`) es atómico contra el mismo snapshot
   "antes": si dos celulares escanean a la vez, el segundo pierde la carrera
   y su cliente muestra "ya ingresó". Autorizar un reingreso es la única
-  escritura permitida sobre una entrada ya ingresada.
+  escritura permitida sobre una entrada ya ingresada. Editar los datos del
+  titular o borrar una entrada ya emitida es admin-only (el admin ya tiene
+  vía libre para escribir cualquier campo; solo el borrado estaba
+  hardcodeado en `false` y hubo que habilitarlo para admin). Borrar libera
+  el cupo (`issuedCount - 1`) salvo que la entrada ya estuviera anulada, para
+  no descontarlo dos veces.
 - `auditLog`: create-only, inmutable incluso para un admin.
 
 ### Fases

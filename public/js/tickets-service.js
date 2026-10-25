@@ -152,6 +152,38 @@ export async function authorizeReentry(code) {
   });
 }
 
+// Admin: corrige los datos del titular de una entrada ya emitida (p.ej.
+// error de tipeo en el nombre o el teléfono).
+export async function updateTicketHolder(code, { holderName, holderPhone }) {
+  const { db, doc, updateDoc } = await loadFirestore();
+  return updateDoc(doc(db, "tickets", code), { holderName, holderPhone: holderPhone || "" });
+}
+
+// Admin: borra la entrada definitivamente. Si no estaba ya anulada,
+// libera el cupo (igual que voidTicket) para no descontarlo dos veces.
+export async function deleteTicket(code) {
+  const { db, doc, runTransaction } = await loadFirestore();
+  const ticketRef = doc(db, "tickets", code);
+  return runTransaction(db, async (tx) => {
+    const ticketSnap = await tx.get(ticketRef);
+    if (!ticketSnap.exists()) throw new Error("La entrada no existe.");
+    const ticket = ticketSnap.data();
+    const wasVoided = ticket.status === "voided";
+
+    let eventRef = null;
+    let eventSnap = null;
+    if (!wasVoided) {
+      eventRef = doc(db, "ticketEvents", ticket.ticketEventId);
+      eventSnap = await tx.get(eventRef);
+    }
+
+    tx.delete(ticketRef);
+    if (!wasVoided && eventSnap && eventSnap.exists()) {
+      tx.update(eventRef, { issuedCount: Math.max(0, eventSnap.data().issuedCount - 1) });
+    }
+  });
+}
+
 // Admin: anula la entrada y libera el cupo.
 export async function voidTicket(code) {
   const { db, doc, runTransaction } = await loadFirestore();

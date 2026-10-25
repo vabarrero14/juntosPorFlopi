@@ -2,7 +2,7 @@ import { requireEventStaff } from "../../js/event-staff-guard.js";
 import { renderEntradasNav } from "../../js/entradas-nav.js";
 import { getTicketEvent } from "../../../js/ticket-events-service.js";
 import { createOrder, fetchMyOrders, fetchAllOrders } from "../../../js/orders-service.js";
-import { issueCourtesyTicket, watchTicketsForEvent } from "../../../js/tickets-service.js";
+import { issueCourtesyTicket, watchTicketsForEvent, updateTicketHolder, deleteTicket } from "../../../js/tickets-service.js";
 import { FLOPI_FEST_ID } from "../../../js/ticket-event-constants.js";
 
 const form = document.getElementById("order-form");
@@ -97,15 +97,63 @@ function renderCourtesyList(tickets) {
         <div class="ticket-code">${t.shortCode}</div>
       </div>
     `;
+    const actionsBox = document.createElement("div");
+    actionsBox.className = "admin-row-actions";
+
     const link = document.createElement("a");
     link.href = `${window.location.origin}/entrada.html?c=${t.id}`;
     link.target = "_blank";
     link.rel = "noopener";
     link.className = "btn btn-outline";
     link.textContent = "Ver entrada";
-    row.appendChild(link);
+    actionsBox.appendChild(link);
+
+    if (ctx.isAdmin) {
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-outline";
+      editBtn.textContent = "Editar";
+      editBtn.addEventListener("click", () => onEditCourtesyTicket(t));
+      actionsBox.appendChild(editBtn);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn btn-outline";
+      deleteBtn.textContent = "Eliminar";
+      deleteBtn.addEventListener("click", () => onDeleteCourtesyTicket(t));
+      actionsBox.appendChild(deleteBtn);
+    }
+
+    row.appendChild(actionsBox);
     box.appendChild(row);
   });
+}
+
+// Admin: corrige nombre/teléfono de una cortesía ya emitida.
+async function onEditCourtesyTicket(ticket) {
+  const holderName = window.prompt("Nombre en la entrada:", ticket.holderName);
+  if (holderName === null) return;
+  const holderPhone = window.prompt("Celular:", ticket.holderPhone || "");
+  if (holderPhone === null) return;
+  if (!holderName.trim()) {
+    window.alert("El nombre no puede quedar vacío.");
+    return;
+  }
+  try {
+    await updateTicketHolder(ticket.id, { holderName: holderName.trim(), holderPhone: holderPhone.trim() });
+  } catch (error) {
+    console.error("Error editando la cortesía:", error);
+    window.alert("No pudimos editar la entrada.");
+  }
+}
+
+// Admin: borra una cortesía ya emitida y libera el cupo si correspondía.
+async function onDeleteCourtesyTicket(ticket) {
+  if (!window.confirm(`¿Eliminar la cortesía de ${ticket.holderName}? No se puede deshacer.`)) return;
+  try {
+    await deleteTicket(ticket.id);
+  } catch (error) {
+    console.error("Error eliminando la cortesía:", error);
+    window.alert("No pudimos eliminar la entrada.");
+  }
 }
 
 async function init() {
