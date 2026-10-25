@@ -265,7 +265,12 @@ service cloud.firestore {
 
       allow create: if isEventStaff() && isValidOrderCreate();
       allow update: if isAdmin() || isValidOrderPaymentBump() || isValidRaffleNumbersUpdate() || isValidAddRaffle();
-      allow delete: if false; // los pedidos no se borran, se anulan (status)
+      // Lo normal es anular (status), no borrar. Pero el admin puede borrar
+      // un pedido definitivamente (ej. uno cargado por error) -- el cliente
+      // (orders-service.js:deleteOrderCascade) se encarga de borrar también
+      // sus entradas y pagos, y de avisar antes con el detalle de lo que se
+      // va a perder.
+      allow delete: if isAdmin();
 
       // Todo pedido tiene al menos 1 entrada -- la entrada es lo que da
       // derecho a comprar rifa, no se vende rifa suelta. "collaboration"
@@ -381,7 +386,8 @@ service cloud.firestore {
 
       allow create: if isEventStaff() && isValidPaymentCreate();
       allow update: if isAdmin();
-      allow delete: if false;
+      // Solo como parte de borrar el pedido completo (ver orders.delete).
+      allow delete: if isAdmin();
 
       function isValidPaymentCreate() {
         let b = request.resource.data;

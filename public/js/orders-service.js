@@ -104,6 +104,46 @@ export async function cancelOrder(id) {
   return updateDoc(doc(db, "orders", id), { status: "cancelled" });
 }
 
+// Admin: borra el pedido definitivamente, junto con todas sus entradas
+// (liberando el cupo de las que no estaban ya anuladas) y sus pagos. La
+// búsqueda de entradas/pagos a borrar es una consulta aparte (las
+// transacciones de Firestore no soportan queries, solo "get" por
+// referencia puntual) -- por eso se resuelve antes de abrir la
+// transacción, que es la que de verdad hace el borrado atómico.
+export async function deleteOrderCascade(orderId) {
+  const { db, doc, collection, query, where, getDocs, runTransaction } = await loadFirestore();
+  const [ticketsSnap, paymentsSnap] = await Promise.all([
+    getDocs(query(collection(db, "tickets"), where("orderId", "==", orderId))),
+    getDocs(query(collection(db, "payments"), where("orderId", "==", orderId))),
+  ]);
+  const ticketRefs = ticketsSnap.docs.map((d) => d.ref);
+  const paymentRefs = paymentsSnap.docs.map((d) => d.ref);
+
+  return runTransaction(db, async (tx) => {
+    const orderRef = doc(db, "orders", orderId);
+    const orderSnap = await tx.get(orderRef);
+    if (!orderSnap.exists()) throw new Error("El pedido no existe.");
+    const order = orderSnap.data();
+
+    const ticketSnaps = await Promise.all(ticketRefs.map((ref) => tx.get(ref)));
+    const nonVoidedCount = ticketSnaps.filter((s) => s.exists() && s.data().status !== "voided").length;
+
+    let eventRef = null;
+    let eventSnap = null;
+    if (nonVoidedCount > 0) {
+      eventRef = doc(db, "ticketEvents", order.ticketEventId);
+      eventSnap = await tx.get(eventRef);
+    }
+
+    tx.delete(orderRef);
+    ticketRefs.forEach((ref) => tx.delete(ref));
+    paymentRefs.forEach((ref) => tx.delete(ref));
+    if (eventSnap && eventSnap.exists()) {
+      tx.update(eventRef, { issuedCount: Math.max(0, eventSnap.data().issuedCount - nonVoidedCount) });
+    }
+  });
+}
+
 // Suma números de rifa a un pedido que ya existía (puede ser uno
 // cargado antes de que la rifa fuera una opción, o uno que ya está
 // pagado). Si el total nuevo supera lo ya confirmado, el pedido vuelve

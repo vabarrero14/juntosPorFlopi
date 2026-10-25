@@ -1,6 +1,6 @@
 import { requireEventStaff } from "../../js/event-staff-guard.js";
 import { renderEntradasNav } from "../../js/entradas-nav.js";
-import { watchOrder, cancelOrder, updateRaffleNumbers, addRaffleToOrder } from "../../../js/orders-service.js";
+import { watchOrder, cancelOrder, updateRaffleNumbers, addRaffleToOrder, deleteOrderCascade } from "../../../js/orders-service.js";
 import { getTicketEvent } from "../../../js/ticket-events-service.js";
 import {
   registerCashPayment,
@@ -115,6 +115,26 @@ function buildShell() {
   shellBuilt = true;
 }
 
+// Admin: borra el pedido completo, con todo lo que tenga atado --
+// entradas emitidas (libera su cupo) y pagos registrados. Avisa con
+// el detalle de lo que se va a perder antes de dejar confirmar.
+async function onDeleteOrder() {
+  const o = currentOrder;
+  const bits = [];
+  if (currentTickets.length > 0) bits.push(`${currentTickets.length} entrada(s) emitida(s)`);
+  if (currentPayments.length > 0) bits.push(`${currentPayments.length} pago(s) registrado(s) (${gs(o.amountConfirmedTotal)} confirmado)`);
+  const detail = bits.length > 0 ? `\n\nSe va a perder: ${bits.join(" y ")}.` : "";
+  if (!window.confirm(`¿Eliminar definitivamente el pedido de ${o.buyerName}? No se puede deshacer.${detail}`)) return;
+
+  try {
+    await deleteOrderCascade(orderId);
+    window.location.href = "pedidos.html";
+  } catch (error) {
+    console.error("Error eliminando el pedido:", error);
+    window.alert("No pudimos eliminar el pedido.");
+  }
+}
+
 async function onAddRaffle() {
   const input = document.getElementById("add-raffle-input");
   const msg = document.getElementById("add-raffle-message");
@@ -216,6 +236,13 @@ function renderOrderSummary() {
       await cancelOrder(orderId);
     });
     actions.appendChild(btn);
+  }
+  if (ctx.isAdmin) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn btn-outline";
+    deleteBtn.textContent = "Eliminar pedido";
+    deleteBtn.addEventListener("click", onDeleteOrder);
+    actions.appendChild(deleteBtn);
   }
 
   const payAmountInput = document.getElementById("pay-amount");

@@ -292,7 +292,11 @@ admin tiene vía libre para tocar el pedido sin esta coreografía).
   puede sumarle rifa a un pedido ya existente (incluso uno cargado antes de
   que la rifa existiera) o anotar los números del talonario entregados --
   si el total nuevo supera lo ya cobrado, el pedido vuelve a "partial" sin
-  invalidar entradas ya emitidas.
+  invalidar entradas ya emitidas. Un admin también puede borrar un pedido
+  definitivamente (no solo cancelarlo): el cliente
+  (`orders-service.js:deleteOrderCascade`) borra en una sola transacción el
+  pedido, sus entradas (liberando el cupo de las que no estaban ya anuladas)
+  y sus pagos, después de un aviso que detalla lo que se va a perder.
 - `tickets`: lectura amplia para cualquiera del staff (necesitan buscar por
   nombre/celular/código corto); lectura pública solo por `get` puntual con el
   código largo exacto (nunca `list`), así nadie enumera entradas ajenas. El
