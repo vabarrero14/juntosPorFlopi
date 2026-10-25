@@ -72,12 +72,15 @@ function buildShell() {
       </div>
 
       <div id="raffle-numbers-section" hidden>
-        <div class="form-row">
-          <label for="raffle-numbers-input">Números del talonario entregados</label>
-          <textarea id="raffle-numbers-input" rows="2" placeholder="Ej: 14, 15, 16"></textarea>
+        <div class="form-row-group" style="align-items: flex-end;">
+          <div class="form-row">
+            <label for="raffle-number-input">Número del talonario entregado</label>
+            <input id="raffle-number-input" placeholder="Ej: 14" />
+          </div>
+          <button type="button" class="btn btn-primary" id="raffle-number-btn">Registrar número</button>
         </div>
         <div id="raffle-numbers-message" class="form-message" hidden></div>
-        <button type="button" class="btn btn-outline" id="raffle-numbers-btn" style="margin-top: 8px;">Guardar números</button>
+        <div id="raffle-numbers-list" style="margin-top: 12px;"></div>
       </div>
 
       <div class="form-row-group" style="margin-top: 16px; align-items: flex-end;">
@@ -113,7 +116,7 @@ function buildShell() {
   });
   document.getElementById("payment-form").addEventListener("submit", onSubmitPayment);
   document.getElementById("emit-btn").addEventListener("click", onEmitTicket);
-  document.getElementById("raffle-numbers-btn").addEventListener("click", onSaveRaffleNumbers);
+  document.getElementById("raffle-number-btn").addEventListener("click", onAddRaffleNumber);
   document.getElementById("add-raffle-btn").addEventListener("click", onAddRaffle);
   document.getElementById("remove-raffle-btn").addEventListener("click", onRemoveRaffle);
 
@@ -188,29 +191,86 @@ async function onRemoveRaffle() {
   }
 }
 
-async function onSaveRaffleNumbers() {
-  const input = document.getElementById("raffle-numbers-input");
+// Registrar un número de rifa es como emitir una entrada: se anota de a
+// uno, y cada uno queda como su propia fila en la lista (nada de un
+// cuadro de texto largo con todos juntos).
+async function onAddRaffleNumber() {
+  const input = document.getElementById("raffle-number-input");
   const msg = document.getElementById("raffle-numbers-message");
-  const btn = document.getElementById("raffle-numbers-btn");
-  const numbers = input.value
-    .split(",")
-    .map((n) => n.trim())
-    .filter(Boolean);
+  const btn = document.getElementById("raffle-number-btn");
+  const value = input.value.trim();
+  const current = currentOrder.raffleNumbers || [];
+
+  msg.hidden = true;
+  if (!value) {
+    msg.textContent = "Ingresá un número.";
+    msg.className = "form-message error";
+    msg.hidden = false;
+    return;
+  }
+  if (current.includes(value)) {
+    msg.textContent = "Ese número ya estaba anotado.";
+    msg.className = "form-message error";
+    msg.hidden = false;
+    return;
+  }
+  if (current.length >= currentOrder.raffleQuantity) {
+    msg.textContent = `Ya se anotaron los ${currentOrder.raffleQuantity} número(s) de este pedido.`;
+    msg.className = "form-message error";
+    msg.hidden = false;
+    return;
+  }
 
   btn.disabled = true;
   try {
-    await updateRaffleNumbers(orderId, numbers);
-    msg.textContent = "Guardado.";
-    msg.className = "form-message success";
-    msg.hidden = false;
+    await updateRaffleNumbers(orderId, [...current, value]);
+    input.value = "";
   } catch (error) {
-    console.error("Error guardando los números de rifa:", error);
+    console.error("Error anotando el número de rifa:", error);
     msg.textContent = "No pudimos guardar. Probá de nuevo.";
     msg.className = "form-message error";
     msg.hidden = false;
   } finally {
     btn.disabled = false;
   }
+}
+
+// Admin: quita un número ya anotado (ej. error de tipeo). Igual que
+// editar/borrar una entrada emitida, corregir un número ya registrado
+// es admin-only -- cualquiera del staff lo puede anotar, pero solo el
+// admin lo puede sacar una vez puesto.
+async function onRemoveRaffleNumber(number) {
+  if (!window.confirm(`¿Quitar el número ${number} de este pedido?`)) return;
+  const current = currentOrder.raffleNumbers || [];
+  try {
+    await updateRaffleNumbers(orderId, current.filter((n) => n !== number));
+  } catch (error) {
+    console.error("Error quitando el número de rifa:", error);
+    window.alert("No pudimos quitar el número.");
+  }
+}
+
+function renderRaffleNumbersList() {
+  const list = document.getElementById("raffle-numbers-list");
+  const numbers = currentOrder.raffleNumbers || [];
+  if (numbers.length === 0) {
+    list.innerHTML = `<p class="mute">Todavía no se anotó ningún número.</p>`;
+    return;
+  }
+  list.innerHTML = "";
+  numbers.forEach((n) => {
+    const row = document.createElement("div");
+    row.className = "entry-row";
+    row.innerHTML = `<div><strong>${esc(n)}</strong></div>`;
+    if (ctx.isAdmin) {
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "btn btn-outline";
+      removeBtn.textContent = "Quitar";
+      removeBtn.addEventListener("click", () => onRemoveRaffleNumber(n));
+      row.appendChild(removeBtn);
+    }
+    list.appendChild(row);
+  });
 }
 
 function renderOrderSummary() {
@@ -251,10 +311,10 @@ function renderOrderSummary() {
       ? `Compró ${o.raffleQuantity} número(s) de rifa. Anotados ${(o.raffleNumbers || []).length} de ${o.raffleQuantity}.`
       : `Compró ${o.raffleQuantity} número(s) de rifa. Vas a poder anotar los números del talonario entregados cuando el pedido esté pagado.`;
   if (raffleReady) {
-    const raffleInput = document.getElementById("raffle-numbers-input");
-    if (document.activeElement !== raffleInput) {
-      raffleInput.value = (o.raffleNumbers || []).join(", ");
-    }
+    const remainingRaffle = o.raffleQuantity - (o.raffleNumbers || []).length;
+    document.getElementById("raffle-number-btn").hidden = remainingRaffle <= 0;
+    document.getElementById("raffle-number-input").hidden = remainingRaffle <= 0;
+    renderRaffleNumbersList();
   }
 
   const actions = document.getElementById("p-order-actions");

@@ -296,8 +296,12 @@ admin tiene vía libre para tocar el pedido sin esta coreografía).
   en cualquier momento (pago completo o no), a diferencia de anotar los
   números del talonario entregados, que -- igual que emitir la entrada --
   recién se habilita cuando el pedido queda "paid" (el papel se entrega
-  junto con la entrada, no antes). Un admin también puede borrar un pedido
-  definitivamente (no solo cancelarlo): el cliente
+  junto con la entrada, no antes). Cada número se anota de a uno (como
+  emitir una entrada, no un cuadro de texto con todos juntos) y queda como
+  su propia fila en el detalle del pedido; cualquiera del staff lo puede
+  anotar, pero solo el admin puede quitar un número ya anotado (mismo
+  criterio que editar/borrar una entrada emitida). Un admin también puede
+  borrar un pedido definitivamente (no solo cancelarlo): el cliente
   (`orders-service.js:deleteOrderCascade`) borra en una sola transacción el
   pedido, sus entradas (liberando el cupo de las que no estaban ya anuladas)
   y sus pagos, después de un aviso que detalla lo que se va a perder.
